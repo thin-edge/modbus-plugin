@@ -1,0 +1,4 @@
+paho-mqtt
+watchdog
+pyfiglet
+pyModbusTCP
