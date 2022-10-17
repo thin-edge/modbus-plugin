@@ -27,12 +27,12 @@ client.connect(broker, port)
 
 
 try:
-    client.publish('c8y/s/us','501,c8y_ModbusDevice')
+    client.publish('c8y/s/us',f'501,{__name__}')
     if not path.exists(fileDir):
         print("Directory does not excist, creating it.")
         makedirs(fileDir)
     with open(configFile, mode='w', newline='') as file:
         file.write(array)
-    client.publish('c8y/s/us',f'503,c8y_ModbusDevice,')
+    client.publish('c8y/s/us',f'503,{__name__},')
 except Exception as e:
-    client.publish('c8y/s/us',f'502,c8y_ModbusDevice,"Error: {e}"')
+    client.publish('c8y/s/us',f'502,{__name__},"Error: {e}"')
