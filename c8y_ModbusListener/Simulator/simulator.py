@@ -1,5 +1,10 @@
 # See also example https://pymodbus.readthedocs.io/en/latest/source/example/updating_server.html
 import logging
+
+logger = logging.getLogger('Modbus Server')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger.debug("It starts")
+
 from threading import Thread
 from pymodbus.constants import Endian
 from pymodbus.server import StartTcpServer as StartServer
@@ -28,11 +33,10 @@ def updating_writer(a):
         address = 0
         logger.info("new values: " + str(payload))
         context[slave_id].setValues(register, address, payload)
-        time.sleep(30)
+        time.sleep(5)
     
 if __name__ == "__main__":
-    logger = logging.getLogger('Modbus Server')
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
     logger.info('Logger for Modbus Server was initialised')
     builder  = BinaryPayloadBuilder()  
     store = ModbusSlaveContext()
