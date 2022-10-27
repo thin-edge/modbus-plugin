@@ -7,25 +7,33 @@ import pyfiglet
 import sys
 import tomli
 import sched
-from pyModbusTCP.client import ModbusClient
+from pymodbus.client import ModbusTcpClient
 from paho.mqtt import client as mqtt_client
 
 from c8y_ModbusListener.mapper import ModbusMapper
+from c8y_ModbusListener.mapper import MappedMessage
+
+topics = {
+    'measurement': 'tedge/measurements/CHILD_ID',
+    'event': 'tedge/events/EVENT_ID/CHILD_ID',
+    'alarm': 'tedge/alarms/SEVERITY/TYPE/CHILD_ID'
+}
 
 
 class ModbusPoll:
-    logger = logging.getLogger('Logger')
+    logger: logging.Logger
     tedgeClient = None
     mapper = None
     baseconfig = {}
     devices = []
 
     def __init__(self):
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
         self.print_banner()
         self.readbasedefinition()
         self.readdevicedefinition()
-        mapper = ModbusMapper({})
+        self.mapper = ModbusMapper({})
         self.tedgeClient = self.connect_to_thinedge()
 
     def print_banner(self):
@@ -38,15 +46,31 @@ class ModbusPoll:
     def polldata(self):
         scheduler = sched.scheduler(time.time, time.sleep)
         for device in self.devices['device']:
-            scheduler.enter(15, 1, self.polldevice, (device, scheduler,))
+            scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, scheduler,))
             scheduler.run()
 
     def polldevice(self, device, scheduler):
-        client = ModbusClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
-        result = client.read_holding_registers(0, 1)
-        msg = self.mapper.mapregister(result)
-        self.logger.debug(result)
-        scheduler.enter(15, 1, self.polldevice, (device, scheduler,))
+        self.logger.debug(f'Polling device {device["name"]}')
+        client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
+        if not device.get('holdingregisters') is None:
+            for registerDefiniton in device['holdingregisters']:
+                try:
+                    registernumber = registerDefiniton['number']
+                    numregisters = int((registerDefiniton['startbit'] + registerDefiniton['nobits'] - 1) / 16) + 1
+                    result = client.read_holding_registers(address=registernumber, count=numregisters, slave=device['address'])
+                    if result.isError():
+                        self.logger.error(f'Failed to read register: {result}')
+                        continue
+                    msg = self.mapper.maphrregister(result, registerDefiniton)
+                    self.logger.debug(f'sending message {msg.data}')
+                    self.send_tedge_message(device, msg)
+                except Exception as e:
+                    self.logger.error(f'Failed to read and map register: {e}')
+        if not device.get('coils') is None:
+            for coil in device['coils']:
+                self.logger.debug(coil)
+        client.close()
+        scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, scheduler,))
 
     def readbasedefinition(self):
         with open('../config/modbus.toml') as fileObj:
@@ -59,6 +83,10 @@ class ModbusPoll:
     def startpolling(self):
         self.polldata()
 
+    def send_tedge_message(self, device, msg: MappedMessage):
+        topic = topics[msg.type].replace('CHILD_ID', device.get('name'))
+        self.tedgeClient.publish(topic=topic, payload=msg.data)
+
     def connect_to_thinedge(self):
         try:
             broker = self.baseconfig['thinedge']['mqtthost']
@@ -66,17 +94,18 @@ class ModbusPoll:
             client_id = f'modbus-client'
             client = mqtt_client.Client(client_id)
             client.connect(broker, port)
+            self.logger.debug(f'Connected to MQTTT broker at {broker}:{port}')
             return client
         except Exception as e:
             self.logger.error(f'Failed to connect to thin-edge: {e}')
 
 
-
 if __name__== "__main__":
     try:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         poll = ModbusPoll()
         poll.startpolling()
     except KeyboardInterrupt:
         sys.exit(1)
-    except Exception as e:
-        poll.logger.error(f'The following error occured: {e}')
+    except Exception as mainerr:
+        print(f'The following error occured: {mainerr}')
