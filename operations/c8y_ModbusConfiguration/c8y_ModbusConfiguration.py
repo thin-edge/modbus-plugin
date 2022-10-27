@@ -29,7 +29,7 @@ client.connect(broker, port)
 try:
     client.publish('c8y/s/us',f'501,{__name__}')
     if not path.exists(fileDir):
-        print("Directory does not excist, creating it.")
+        print("Directory does not exist, creating it.")
         makedirs(fileDir)
     with open(configFile, mode='w', newline='') as file:
         file.write(array)

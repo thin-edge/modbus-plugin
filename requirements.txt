@@ -1,0 +1,7 @@
+paho-mqtt
+pymodbus
+watchdog
+pyfiglet
+pyModbusTCP
+pyserial-asyncio
+tomli
