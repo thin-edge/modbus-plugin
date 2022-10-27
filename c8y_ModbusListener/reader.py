@@ -52,12 +52,15 @@ class ModbusPoll:
     def polldevice(self, device, scheduler):
         self.logger.debug(f'Polling device {device["name"]}')
         client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
-        if not device.get('holdingregisters') is None:
-            for registerDefiniton in device['holdingregisters']:
+        if not device.get('registers') is None:
+            for registerDefiniton in device['registers']:
                 try:
                     registernumber = registerDefiniton['number']
                     numregisters = int((registerDefiniton['startbit'] + registerDefiniton['nobits'] - 1) / 16) + 1
-                    result = client.read_holding_registers(address=registernumber, count=numregisters, slave=device['address'])
+                    if registerDefiniton.get('input') == True:
+                        result = client.read_input_registers(address=registernumber, count=numregisters, slave=device['address'])
+                    else:
+                        result = client.read_holding_registers(address=registernumber, count=numregisters, slave=device['address'])
                     if result.isError():
                         self.logger.error(f'Failed to read register: {result}')
                         continue

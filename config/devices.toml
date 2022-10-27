@@ -6,21 +6,25 @@ ip="127.0.0.1"
 port=502 #probably fixed to 502
 protocol="TCP"
 
-[[device.holdingregisters]]
+[[device.registers]]
 number=0
 startbit=0
 nobits=16
 multiplier=1
 divisor=1
 decimalshiftright=1
+input=false
 type="measurement"
 templatestring="{\"sag_Temperature\":{\"T\":%% }}"
 
-[[device.holdingregisters]]
+[[device.registers]]
 number=1
 startbit=0
 nobits=16
 multiplier=1
 divisor=1
+input=true
 type="measurement"
 templatestring="{\"sag_Pressure\":{\"P\":%% }}"
+
+[[device.coil]]
