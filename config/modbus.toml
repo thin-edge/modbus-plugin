@@ -1,5 +1,5 @@
 [modbus]
-pollinterval=1
+pollinterval=2
 
 [thinedge]
 mqtthost="127.0.0.1"

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 import logging
+import os.path
 import threading
 import time
 import argparse
@@ -8,11 +9,11 @@ import pyfiglet
 import sys
 import tomli
 import sched
-from pymodbus.client import ModbusTcpClient
+from pymodbus.client.tcp import ModbusTcpClient
 from paho.mqtt import client as mqtt_client
 
-from c8y_ModbusListener.mapper import ModbusMapper
-from c8y_ModbusListener.mapper import MappedMessage
+from mapper import ModbusMapper
+from mapper import MappedMessage
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
@@ -26,6 +27,7 @@ defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
 devicesConfigName = 'devices.toml'
 
+
 class ModbusPoll:
     class ConfigFileChangedHandler(FileSystemEventHandler):
         poller = None
@@ -37,7 +39,9 @@ class ModbusPoll:
             if isinstance(event, DirModifiedEvent):
                 return
             elif isinstance(event, FileModifiedEvent) and event.event_type == 'modified':
-                self.poller.reread_config()
+                filename = os.path.basename(event.src_path)
+                if filename == baseConfigName or filename == devicesConfigName:
+                    self.poller.reread_config()
 
     logger: logging.Logger
     tedgeClient: mqtt_client.Client = None
@@ -61,7 +65,8 @@ class ModbusPoll:
             restartrequired = True
             self.baseconfig = newbaseconfig
         newdevices = self.readdevicedefinition(f'{self.configdir}/{devicesConfigName}')
-        if len(newdevices) >= 1 and newdevices.get('device') and newdevices.get('device') is not None and newdevices.get('device') != self.devices:
+        if len(newdevices) >= 1 and newdevices.get('device') and newdevices.get(
+                'device') is not None and newdevices.get('device') != self.devices:
             restartrequired = True
             self.devices = newdevices['device']
         if restartrequired:
@@ -161,7 +166,8 @@ if __name__ == "__main__":
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--configdir', required=False)
         args = parser.parse_args()
-        poll = ModbusPoll(args.configdir or defaultFileDir)
+        configdir = os.path.abspath(args.configdir)
+        poll = ModbusPoll(configdir or defaultFileDir)
         poll.startpolling()
     except KeyboardInterrupt:
         sys.exit(1)
