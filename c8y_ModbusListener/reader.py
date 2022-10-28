@@ -2,7 +2,7 @@
 # coding=utf-8
 import logging
 import time
-
+import argparse
 import pyfiglet
 import sys
 import tomli
@@ -18,6 +18,9 @@ topics = {
     'event': 'tedge/events/EVENT_ID/CHILD_ID',
     'alarm': 'tedge/alarms/SEVERITY/TYPE/CHILD_ID'
 }
+defaultFileDir = "/etc/tedge/plugins/modbus"
+baseConfigName = 'modbus.toml'
+devicesConfigName = 'devices.toml'
 
 
 class ModbusPoll:
@@ -27,12 +30,12 @@ class ModbusPoll:
     baseconfig = {}
     devices = []
 
-    def __init__(self):
+    def __init__(self, configDir='.'):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.print_banner()
-        self.readbasedefinition()
-        self.readdevicedefinition()
+        self.readbasedefinition(f'{configDir}/{baseConfigName}')
+        self.readdevicedefinition(f'{configDir}/{devicesConfigName}')
         self.mapper = ModbusMapper({})
         self.tedgeClient = self.connect_to_thinedge()
 
@@ -40,7 +43,8 @@ class ModbusPoll:
         self.logger.info(pyfiglet.figlet_format("Modbus plugin for thin-edge.io"))
         self.logger.info("Author:\t\tRina,Mario,Murat")
         self.logger.info("Date:\t\t12th October 2022")
-        self.logger.info("Description:\tA service that extracts data from a Modbus Server and sends it to a local thin-edge.io broker.")
+        self.logger.info(
+            "Description:\tA service that extracts data from a Modbus Server and sends it to a local thin-edge.io broker.")
         self.logger.info("Documentation:\tPlease refer to the c8y-documentation wiki to find service description")
 
     def polldata(self):
@@ -58,9 +62,11 @@ class ModbusPoll:
                     registernumber = registerDefiniton['number']
                     numregisters = int((registerDefiniton['startbit'] + registerDefiniton['nobits'] - 1) / 16) + 1
                     if registerDefiniton.get('input') == True:
-                        result = client.read_input_registers(address=registernumber, count=numregisters, slave=device['address'])
+                        result = client.read_input_registers(address=registernumber, count=numregisters,
+                                                             slave=device['address'])
                     else:
-                        result = client.read_holding_registers(address=registernumber, count=numregisters, slave=device['address'])
+                        result = client.read_holding_registers(address=registernumber, count=numregisters,
+                                                               slave=device['address'])
                     if result.isError():
                         self.logger.error(f'Failed to read register: {result}')
                         continue
@@ -75,12 +81,12 @@ class ModbusPoll:
         client.close()
         scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, scheduler,))
 
-    def readbasedefinition(self):
-        with open('../config/modbus.toml') as fileObj:
+    def readbasedefinition(self, basepath):
+        with open(basepath) as fileObj:
             self.baseconfig = tomli.loads(fileObj.read())
 
-    def readdevicedefinition(self):
-        with open('../config/devices.toml') as deviceObj:
+    def readdevicedefinition(self, devicepath):
+        with open(devicepath) as deviceObj:
             self.devices = tomli.loads(deviceObj.read())
 
     def startpolling(self):
@@ -103,10 +109,13 @@ class ModbusPoll:
             self.logger.error(f'Failed to connect to thin-edge: {e}')
 
 
-if __name__== "__main__":
+if __name__ == "__main__":
     try:
         logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        poll = ModbusPoll()
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-c', '--configdir', required=False)
+        args = parser.parse_args()
+        poll = ModbusPoll(args.configdir or defaultFileDir)
         poll.startpolling()
     except KeyboardInterrupt:
         sys.exit(1)
