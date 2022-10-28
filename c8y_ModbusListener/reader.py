@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 import logging
+import threading
 import time
 import argparse
 import pyfiglet
@@ -13,6 +14,9 @@ from paho.mqtt import client as mqtt_client
 from c8y_ModbusListener.mapper import ModbusMapper
 from c8y_ModbusListener.mapper import MappedMessage
 
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
+
 topics = {
     'measurement': 'tedge/measurements/CHILD_ID',
     'event': 'tedge/events/EVENT_ID/CHILD_ID',
@@ -22,22 +26,61 @@ defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
 devicesConfigName = 'devices.toml'
 
-
 class ModbusPoll:
+    class ConfigFileChangedHandler(FileSystemEventHandler):
+        poller = None
+
+        def __init__(self, poller):
+            self.poller = poller
+
+        def on_modified(self, event):
+            if isinstance(event, DirModifiedEvent):
+                return
+            elif isinstance(event, FileModifiedEvent) and event.event_type == 'modified':
+                self.poller.reread_config()
+
     logger: logging.Logger
-    tedgeClient = None
-    mapper = None
+    tedgeClient: mqtt_client.Client = None
+    poll_scheduler = sched.scheduler(time.time, time.sleep)
+    mapper = ModbusMapper({})
     baseconfig = {}
     devices = []
+    configdir = '.'
 
-    def __init__(self, configDir='.'):
+    def __init__(self, configdir='.'):
+        self.configdir = configdir
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         self.print_banner()
-        self.readbasedefinition(f'{configDir}/{baseConfigName}')
-        self.readdevicedefinition(f'{configDir}/{devicesConfigName}')
-        self.mapper = ModbusMapper({})
-        self.tedgeClient = self.connect_to_thinedge()
+
+    def reread_config(self):
+        self.logger.info('file change detected, reading files')
+        newbaseconfig = self.readbasedefinition(f'{self.configdir}/{baseConfigName}')
+        restartrequired = False
+        if len(newbaseconfig) > 1 and newbaseconfig != self.baseconfig:
+            restartrequired = True
+            self.baseconfig = newbaseconfig
+        newdevices = self.readdevicedefinition(f'{self.configdir}/{devicesConfigName}')
+        if len(newdevices) >= 1 and newdevices.get('device') and newdevices.get('device') is not None and newdevices.get('device') != self.devices:
+            restartrequired = True
+            self.devices = newdevices['device']
+        if restartrequired:
+            self.logger.info('config change detected, restart polling')
+            if self.tedgeClient is not None and self.tedgeClient.is_connected():
+                self.tedgeClient.disconnect()
+            self.tedgeClient = self.connect_to_thinedge()
+
+    def watchConfigFiles(self, configDir):
+        event_handler = self.ConfigFileChangedHandler(self)
+        observer = Observer()
+        observer.schedule(event_handler, configDir)
+        observer.start()
+        try:
+            while True:
+                time.sleep(5)
+        except:
+            observer.stop()
+            self.logger.error('File observer failed')
 
     def print_banner(self):
         self.logger.info(pyfiglet.figlet_format("Modbus plugin for thin-edge.io"))
@@ -48,15 +91,15 @@ class ModbusPoll:
         self.logger.info("Documentation:\tPlease refer to the c8y-documentation wiki to find service description")
 
     def polldata(self):
-        scheduler = sched.scheduler(time.time, time.sleep)
-        for device in self.devices['device']:
-            scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, scheduler,))
-            scheduler.run()
+        for device in self.devices:
+            self.polldevice(device)
+        self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldata, ())
+        self.poll_scheduler.run()
 
-    def polldevice(self, device, scheduler):
+    def polldevice(self, device):
         self.logger.debug(f'Polling device {device["name"]}')
         client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
-        if not device.get('registers') is None:
+        if device.get('registers') is not None:
             for registerDefiniton in device['registers']:
                 try:
                     registernumber = registerDefiniton['number']
@@ -75,21 +118,24 @@ class ModbusPoll:
                     self.send_tedge_message(device, msg)
                 except Exception as e:
                     self.logger.error(f'Failed to read and map register: {e}')
-        if not device.get('coils') is None:
+        if device.get('coils') is not None:
             for coil in device['coils']:
                 self.logger.debug(coil)
         client.close()
-        scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, scheduler,))
 
     def readbasedefinition(self, basepath):
         with open(basepath) as fileObj:
-            self.baseconfig = tomli.loads(fileObj.read())
+            return tomli.loads(fileObj.read())
 
     def readdevicedefinition(self, devicepath):
         with open(devicepath) as deviceObj:
-            self.devices = tomli.loads(deviceObj.read())
+            return tomli.loads(deviceObj.read())
 
     def startpolling(self):
+        self.reread_config()
+        file_watcher_thread = threading.Thread(target=self.watchConfigFiles, args=[self.configdir])
+        file_watcher_thread.daemon = True
+        file_watcher_thread.start()
         self.polldata()
 
     def send_tedge_message(self, device, msg: MappedMessage):

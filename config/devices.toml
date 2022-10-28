@@ -11,7 +11,7 @@ number=0
 startbit=0
 nobits=16
 multiplier=1
-divisor=1
+divisor=5
 decimalshiftright=1
 input=false
 type="measurement"
@@ -20,10 +20,10 @@ templatestring="{\"sag_Temperature\":{\"T\":%% }}"
 [[device.registers]]
 number=1
 startbit=0
-nobits=16
+nobits=8
 multiplier=1
-divisor=1
-input=true
+divisor=2
+input=false
 type="measurement"
 templatestring="{\"sag_Pressure\":{\"P\":%% }}"
 
