@@ -51,10 +51,14 @@ class ModbusPoll:
     devices = []
     configdir = '.'
 
-    def __init__(self, configdir='.'):
+    def __init__(self, configdir='.', logfile=None):
         self.configdir = configdir
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
+        if logfile is not None:
+            fh = logging.FileHandler(logfile)
+            fh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+            self.logger.addHandler(fh)
         self.print_banner()
 
     def reread_config(self):
@@ -99,7 +103,6 @@ class ModbusPoll:
         for device in self.devices:
             self.polldevice(device)
         self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldata, ())
-        self.poll_scheduler.run()
 
     def polldevice(self, device):
         self.logger.debug(f'Polling device {device["name"]}')
@@ -142,32 +145,39 @@ class ModbusPoll:
         file_watcher_thread.daemon = True
         file_watcher_thread.start()
         self.polldata()
+        self.poll_scheduler.run()
 
     def send_tedge_message(self, device, msg: MappedMessage):
         topic = topics[msg.type].replace('CHILD_ID', device.get('name'))
         self.tedgeClient.publish(topic=topic, payload=msg.data)
 
     def connect_to_thinedge(self):
-        try:
-            broker = self.baseconfig['thinedge']['mqtthost']
-            port = self.baseconfig['thinedge']['mqttport']
-            client_id = f'modbus-client'
-            client = mqtt_client.Client(client_id)
-            client.connect(broker, port)
-            self.logger.debug(f'Connected to MQTTT broker at {broker}:{port}')
-            return client
-        except Exception as e:
-            self.logger.error(f'Failed to connect to thin-edge: {e}')
+        while True:
+            try:
+                broker = self.baseconfig['thinedge']['mqtthost']
+                port = self.baseconfig['thinedge']['mqttport']
+                client_id = f'modbus-client'
+                client = mqtt_client.Client(client_id)
+                client.connect(broker, port)
+                self.logger.debug(f'Connected to MQTTT broker at {broker}:{port}')
+                return client
+            except Exception as e:
+                self.logger.error(f'Failed to connect to thin-edge: {e}')
+                time.sleep(5)
 
 
 if __name__ == "__main__":
     try:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--configdir', required=False)
+        parser.add_argument('-l', '--logfile', required=False)
         args = parser.parse_args()
-        configdir = os.path.abspath(args.configdir)
-        poll = ModbusPoll(configdir or defaultFileDir)
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        if args.configdir is not None:
+            configdir = os.path.abspath(args.configdir)
+        else:
+            configdir = None
+        poll = ModbusPoll(configdir or defaultFileDir, args.logfile)
         poll.startpolling()
     except KeyboardInterrupt:
         sys.exit(1)
