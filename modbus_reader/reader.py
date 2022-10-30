@@ -12,8 +12,8 @@ import sched
 from pymodbus.client.tcp import ModbusTcpClient
 from paho.mqtt import client as mqtt_client
 
-from mapper import ModbusMapper
-from mapper import MappedMessage
+from modbus_reader.mapper import ModbusMapper
+from modbus_reader.mapper import MappedMessage
 
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
@@ -166,7 +166,7 @@ class ModbusPoll:
                 time.sleep(5)
 
 
-if __name__ == "__main__":
+def main():
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument('-c', '--configdir', required=False)
@@ -183,3 +183,7 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as mainerr:
         print(f'The following error occured: {mainerr}')
+
+
+if __name__ == "__main__":
+    main()
