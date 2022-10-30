@@ -1,0 +1,5 @@
+te-modbus-plugin (0.1) UNRELEASED; urgency=medium
+
+  * Modbus Plugin for thin-edge. Initial release.
+
+ -- Mario Heidenreich <mario.heidenreich@softwareag.com>  Sun, 30 Oct 2022 17:34:33 +0100

@@ -1,0 +1,16 @@
+Source: te-modbus-reader
+Version: 0.1-1
+Section: python
+Priority: extra
+Maintainer: Mario Heidenreich <mario.heidenreich@softwareag.com>
+Build-Depends: debhelper (>= 9), python, dh-virtualenv (>= 0.8)
+Standards-Version: 3.9.5
+
+Package: te-modbus-reader
+Architecture: any
+Pre-Depends: dpkg (>= 1.16.1), python3.9, ${misc:Pre-Depends}
+Depends: ${misc:Depends}
+Description: A short summary of what this is.
+    Further indented lines can contain extra information.
+    .
+    A single dot separates paragraphs.
