@@ -1,6 +1,6 @@
 [Unit]
 Description=Modbus Data Reader
-After=tedge-mapper-c8y.service
+After=tedge-agent.service
 
 [Service]
 User=root
