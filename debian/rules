@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@ --with python-virtualenv
+	dh $@ --with python-virtualenv --with systemd
 
+#DEBHELPER#
 
