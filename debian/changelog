@@ -1,4 +1,4 @@
-te-modbus-plugin (0.1) UNRELEASED; urgency=medium
+te-modbus-plugin (0.1.0) UNRELEASED; urgency=medium
 
   * Modbus Plugin for thin-edge. Initial release.
 
