@@ -74,7 +74,7 @@ class ModbusMapper:
         messages = []
         if coildefinition.get('alarmmapping') is not None:
             if result.bits[0] > 0:
-                severity = coildefinition['alarmmapping']['severity']
+                severity = coildefinition['alarmmapping']['severity'].lower()
                 alarmtype = coildefinition['alarmmapping']['type']
                 text = coildefinition['alarmmapping']['text']
                 # raise alarm if bit is 1

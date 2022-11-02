@@ -120,7 +120,6 @@ class ModbusPoll:
                         continue
                     msgs = mapper.mapregister(result, registerDefiniton)
                     for msg in msgs:
-                        self.logger.debug(f'sending message {msg.data}')
                         self.send_tedge_message(msg)
                 except ConnectionException as e:
                     self.logger.error(f'Failed to connect to device: {device["name"]}')
@@ -170,6 +169,7 @@ class ModbusPoll:
         self.poll_scheduler.run()
 
     def send_tedge_message(self, msg: MappedMessage):
+        self.logger.debug(f'sending message {msg.data} to topic {msg.topic}')
         self.tedgeClient.publish(topic=msg.topic, payload=msg.data)
 
     def connect_to_thinedge(self):
