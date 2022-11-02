@@ -142,7 +142,6 @@ class ModbusPoll:
                         continue
                     msgs = mapper.mapcoil(result, coildefinition)
                     for msg in msgs:
-                        self.logger.debug(f'sending message {msg.data}')
                         self.send_tedge_message(msg)
                 except ConnectionException as e:
                     self.logger.error(f'Failed to connect to device: {device["name"]}')

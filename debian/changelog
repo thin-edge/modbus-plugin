@@ -1,8 +1,8 @@
 te-modbus-plugin (0.2.0) UNRELEASED; urgency=medium
  
-  * Adding read capabilities to Register Measurements values: signed values,
+  * Added read capabilities to register Measurements values: signed values,
     float, etc.
-  * basic Alarm handling for coils
+  * Added Basic Alarm handling for coils
 
  -- Mario Heidenreich <mario.heidenreich@softwareag.com>  Wed, 02 Nov 2022 19:51:08 +0100
 

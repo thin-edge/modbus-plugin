@@ -20,6 +20,7 @@ as Windows filesystem won't handle the permissions correctly (sets +x on everyth
 * do the Python Wheel build: install the build helper via `pip install build` and do a `python -m build`
 * install all dependencies `sudo apt-get install build-essential debhelper devscripts equivs dh-virtualenv`
 * cd into the source root folder (the one that includes the debian directory)
+* make changes to the debian/changelog file and increase the version number if necessary 
 * run `dpkg-buildpackage -us -uc -b` In case you are running into problems with virtualenv, try a `sudo pip install virtualenv` first
 
 ## Deployment
