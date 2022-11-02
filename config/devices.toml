@@ -1,30 +1,111 @@
 [[device]]
-name="Test"
+name="Test" # name of the child device (will be auto-generated on first message)
 #type="Modbus-Thinedge"
-address=1
-ip="127.0.0.1"
-port=502 #probably fixed to 502
-protocol="TCP"
+address=1 # Modbus slave number
+ip="127.0.0.1" # Modbus server IP
+port=502 # Modbus server Port
+protocol="TCP" # only support for TCP now
+littlewordendian=true
 
 [[device.registers]]
-number=0
-startbit=0
-nobits=16
+number=0 # register number
+startbit=0 # where to start to read in the register
+nobits=16 # length of field to read
+signed=true
 multiplier=1
-divisor=5
-decimalshiftright=1
-input=false
-type="measurement"
-templatestring="{\"sag_Temperature\":{\"T\":%% }}"
+divisor=1
+decimalshiftright=0
+input=false # true = Input Register false = Holding Register
+type="measurement" # only measurement for now, later event and alarm
+templatestring="{\"sag_Temperature\":{\"T\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
+#see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
 
 [[device.registers]]
 number=1
 startbit=0
-nobits=8
+nobits=16
+signed=false
 multiplier=1
-divisor=2
+divisor=1
 input=false
 type="measurement"
 templatestring="{\"sag_Pressure\":{\"P\":%% }}"
 
-[[device.coil]]
+[[device.registers]]
+number=2
+startbit=0
+nobits=32
+signed=false
+multiplier=1
+divisor=1
+input=false
+type="measurement"
+templatestring="{\"sag_PressureFloat\":{\"P\":%% }}"
+
+[[device.registers]]
+number=4
+startbit=0
+nobits=4
+signed=false
+multiplier=1
+divisor=1
+input=false
+type="measurement"
+templatestring="{\"sag_Flags1\":{\"P\":%% }}"
+
+[[device.registers]]
+number=4
+startbit=4
+nobits=8
+signed=true
+multiplier=1
+divisor=1
+input=false
+decimalshiftright=1
+type="measurement"
+templatestring="{\"sag_Status\":{\"P\":%% }}"
+
+[[device.registers]]
+number=4
+startbit=8
+nobits=4
+signed=false
+multiplier=1
+divisor=1
+input=false
+type="measurement"
+templatestring="{\"sag_Flags2\":{\"P\":%% }}"
+
+[[device.registers]]
+number=4
+startbit=0
+nobits=16
+signed=false
+multiplier=1
+divisor=1
+input=false
+type="measurement"
+templatestring="{\"sag_Flags2\":{\"P\":%% }}"
+
+[[device.registers]]
+number=5
+startbit=0
+nobits=32
+signed=false
+multiplier=1
+divisor=1
+input=false
+type="measurement"
+templatestring="{\"sag_LittleWord\":{\"P\":%% }}"
+
+[[device.registers]]
+number=7
+startbit=0
+nobits=16
+signed=false
+multiplier=1
+divisor=1
+input=false
+littleendian=true
+type="measurement"
+templatestring="{\"sag_LittleEndian\":{\"P\":%% }}"

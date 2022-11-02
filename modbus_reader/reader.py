@@ -1,22 +1,22 @@
 #!/usr/bin/python3
 # coding=utf-8
+import argparse
 import logging
 import os.path
+import sched
+import sys
 import threading
 import time
-import argparse
+
 import pyfiglet
-import sys
 import tomli
-import sched
-from pymodbus.client.tcp import ModbusTcpClient
 from paho.mqtt import client as mqtt_client
-
-from modbus_reader.mapper import ModbusMapper
-from modbus_reader.mapper import MappedMessage
-
-from watchdog.observers import Observer
+from pymodbus.client.tcp import ModbusTcpClient
+from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
+from watchdog.observers import Observer
+
+from modbus_reader.mapper import MappedMessage, ModbusMapper
 
 topics = {
     'measurement': 'tedge/measurements/CHILD_ID',
@@ -46,7 +46,6 @@ class ModbusPoll:
     logger: logging.Logger
     tedgeClient: mqtt_client.Client = None
     poll_scheduler = sched.scheduler(time.time, time.sleep)
-    mapper = ModbusMapper({})
     baseconfig = {}
     devices = []
     configdir = '.'
@@ -107,6 +106,7 @@ class ModbusPoll:
     def polldevice(self, device):
         self.logger.debug(f'Polling device {device["name"]}')
         client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
+        mapper = ModbusMapper(device)
         if device.get('registers') is not None:
             for registerDefiniton in device['registers']:
                 try:
@@ -121,11 +121,15 @@ class ModbusPoll:
                     if result.isError():
                         self.logger.error(f'Failed to read register: {result}')
                         continue
-                    msg = self.mapper.maphrregister(result, registerDefiniton)
+                    msg = mapper.mapregister(result, registerDefiniton)
                     self.logger.debug(f'sending message {msg.data}')
                     self.send_tedge_message(device, msg)
+                except ConnectionException as e:
+                    self.logger.error(f'Failed to connect to device: {device["name"]}')
+                    return
                 except Exception as e:
                     self.logger.error(f'Failed to read and map register: {e}')
+
         if device.get('coils') is not None:
             for coil in device['coils']:
                 self.logger.debug(coil)
