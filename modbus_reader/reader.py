@@ -18,11 +18,6 @@ from watchdog.observers import Observer
 
 from modbus_reader.mapper import MappedMessage, ModbusMapper
 
-topics = {
-    'measurement': 'tedge/measurements/CHILD_ID',
-    'event': 'tedge/events/EVENT_ID/CHILD_ID',
-    'alarm': 'tedge/alarms/SEVERITY/TYPE/CHILD_ID'
-}
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
 devicesConfigName = 'devices.toml'
@@ -107,6 +102,8 @@ class ModbusPoll:
         self.logger.debug(f'Polling device {device["name"]}')
         client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
         mapper = ModbusMapper(device)
+
+        # read and handle all Registers
         if device.get('registers') is not None:
             for registerDefiniton in device['registers']:
                 try:
@@ -121,18 +118,39 @@ class ModbusPoll:
                     if result.isError():
                         self.logger.error(f'Failed to read register: {result}')
                         continue
-                    msg = mapper.mapregister(result, registerDefiniton)
-                    self.logger.debug(f'sending message {msg.data}')
-                    self.send_tedge_message(device, msg)
+                    msgs = mapper.mapregister(result, registerDefiniton)
+                    for msg in msgs:
+                        self.logger.debug(f'sending message {msg.data}')
+                        self.send_tedge_message(msg)
                 except ConnectionException as e:
                     self.logger.error(f'Failed to connect to device: {device["name"]}')
                     return
                 except Exception as e:
                     self.logger.error(f'Failed to read and map register: {e}')
 
+        # read and handle all Coils
         if device.get('coils') is not None:
-            for coil in device['coils']:
-                self.logger.debug(coil)
+            for coildefinition in device['coils']:
+                try:
+                    coilnumber = coildefinition['number']
+                    if coildefinition.get('input') == True:
+                        result = client.read_coils(address=coilnumber, count=1,
+                                                   slave=device['address'])
+                    else:
+                        result = client.read_discrete_inputs(address=coilnumber, count=1, slave=device['address'])
+                    if result.isError():
+                        self.logger.error(f'Failed to read coil: {result}')
+                        continue
+                    msgs = mapper.mapcoil(result, coildefinition)
+                    for msg in msgs:
+                        self.logger.debug(f'sending message {msg.data}')
+                        self.send_tedge_message(msg)
+                except ConnectionException as e:
+                    self.logger.error(f'Failed to connect to device: {device["name"]}')
+                    return
+                except Exception as e:
+                    self.logger.error(f'Failed to read and map register: {e}')
+
         client.close()
 
     def readbasedefinition(self, basepath):
@@ -151,9 +169,8 @@ class ModbusPoll:
         self.polldata()
         self.poll_scheduler.run()
 
-    def send_tedge_message(self, device, msg: MappedMessage):
-        topic = topics[msg.type].replace('CHILD_ID', device.get('name'))
-        self.tedgeClient.publish(topic=topic, payload=msg.data)
+    def send_tedge_message(self, msg: MappedMessage):
+        self.tedgeClient.publish(topic=msg.topic, payload=msg.data)
 
     def connect_to_thinedge(self):
         while True:

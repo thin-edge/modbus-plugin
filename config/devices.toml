@@ -16,9 +16,8 @@ multiplier=1
 divisor=1
 decimalshiftright=0
 input=false # true = Input Register false = Holding Register
-type="measurement" # only measurement for now, later event and alarm
-templatestring="{\"sag_Temperature\":{\"T\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
 #see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
+measurementmapping.templatestring="{\"sag_Temperature\":{\"T\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
 
 [[device.registers]]
 number=1
@@ -28,8 +27,7 @@ signed=false
 multiplier=1
 divisor=1
 input=false
-type="measurement"
-templatestring="{\"sag_Pressure\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_Pressure\":{\"P\":%% }}"
 
 [[device.registers]]
 number=2
@@ -39,8 +37,7 @@ signed=false
 multiplier=1
 divisor=1
 input=false
-type="measurement"
-templatestring="{\"sag_PressureFloat\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_PressureFloat\":{\"P\":%% }}"
 
 [[device.registers]]
 number=4
@@ -50,8 +47,7 @@ signed=false
 multiplier=1
 divisor=1
 input=false
-type="measurement"
-templatestring="{\"sag_Flags1\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_Flags1\":{\"P\":%% }}"
 
 [[device.registers]]
 number=4
@@ -62,8 +58,7 @@ multiplier=1
 divisor=1
 input=false
 decimalshiftright=1
-type="measurement"
-templatestring="{\"sag_Status\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_Status\":{\"P\":%% }}"
 
 [[device.registers]]
 number=4
@@ -73,8 +68,7 @@ signed=false
 multiplier=1
 divisor=1
 input=false
-type="measurement"
-templatestring="{\"sag_Flags2\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_Flags2\":{\"P\":%% }}"
 
 [[device.registers]]
 number=4
@@ -84,8 +78,7 @@ signed=false
 multiplier=1
 divisor=1
 input=false
-type="measurement"
-templatestring="{\"sag_Flags2\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_Flags2\":{\"P\":%% }}"
 
 [[device.registers]]
 number=5
@@ -95,8 +88,7 @@ signed=false
 multiplier=1
 divisor=1
 input=false
-type="measurement"
-templatestring="{\"sag_LittleWord\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_LittleWord\":{\"P\":%% }}"
 
 [[device.registers]]
 number=7
@@ -107,5 +99,12 @@ multiplier=1
 divisor=1
 input=false
 littleendian=true
-type="measurement"
-templatestring="{\"sag_LittleEndian\":{\"P\":%% }}"
+measurementmapping.templatestring="{\"sag_LittleEndian\":{\"P\":%% }}"
+
+
+[[device.coils]]
+number=0
+input=false
+alarmmapping.severity="MAJOR"
+alarmmapping.text="Something went wrong"
+alarmmapping.type="sag_RaiseAlarm"

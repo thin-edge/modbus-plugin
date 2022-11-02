@@ -1,6 +1,10 @@
+import json
+
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.register_read_message import ReadHoldingRegistersResponse
+from pymodbus.bit_read_message import ReadBitsResponseBase
+from pymodbus.register_read_message import ReadRegistersResponseBase
+from datetime import datetime, timezone
 
 decoder_func = {
     'int16': lambda d: d.decode_16bit_int(),
@@ -9,13 +13,19 @@ decoder_func = {
     'float64': lambda d: d.decode_64bit_float()
 }
 
+topics = {
+    'measurement': 'tedge/measurements/CHILD_ID',
+    'event': 'tedge/events/EVENT_ID/CHILD_ID',
+    'alarm': 'tedge/alarms/SEVERITY/TYPE/CHILD_ID'
+}
+
 
 class MappedMessage:
-    type: str = 'event'
+    topic: str = ''
     data: str = ''
 
-    def __init__(self, data, typ='event'):
-        self.type = typ
+    def __init__(self, data, topic):
+        self.topic = topic
         self.data = data
 
 
@@ -25,14 +35,12 @@ class ModbusMapper:
     def __init__(self, device):
         self.device = device
 
-    def mapregister(self, registerresponse: ReadHoldingRegistersResponse, registerdef):
-
-        outtype = registerdef['type']
+    def mapregister(self, registerresponse: ReadRegistersResponseBase, registerdef):
+        messages = []
         startbit = registerdef['startbit']
         fieldlength = registerdef['nobits']
         is_little_endian = registerdef.get('littleendian') or False
         is_litte_word_endian = self.device.get('littlewordendian') or False
-        data = None
         readregister = registerresponse.registers
         if fieldlength > 16 and startbit > 0:
             raise Exception('float values must align to the zero bit of the start register')
@@ -54,19 +62,29 @@ class ModbusMapper:
                 value = -(((buffer ^ mask) + 1) & mask)
             else:
                 value = buffer & mask
-        if outtype == 'measurement':
+        if registerdef.get('measurementmapping') is not None:
             value = value * (registerdef.get('multiplier') or 1) * (
-                        10 ** (registerdef.get('decimalshiftright') or 0)) / (
+                    10 ** (registerdef.get('decimalshiftright') or 0)) / (
                             registerdef.get('divisor') or 1)
-            data = registerdef['templatestring'].replace('%%', str(value))
+            data = registerdef['measurementmapping']['templatestring'].replace('%%', str(value))
+            messages.append(MappedMessage(data, topics['measurement'].replace('CHILD_ID', self.device.get('name'))))
+        return messages
 
-        return MappedMessage(data, outtype)
-
-    def mapcoil(self, value):
-        data = {
-            "temperature": value
-        }
-        return MappedMessage(data, 'measurement')
+    def mapcoil(self, result: ReadBitsResponseBase, coildefinition):
+        messages = []
+        if coildefinition.get('alarmmapping') is not None:
+            if result.bits[0] > 0:
+                severity = coildefinition['alarmmapping']['severity']
+                alarmtype = coildefinition['alarmmapping']['type']
+                text = coildefinition['alarmmapping']['text']
+                # raise alarm if bit is 1
+                topic = topics['alarm']
+                topic = topic.replace('CHILD_ID', self.device.get('name'))
+                topic = topic.replace('SEVERITY', severity)
+                topic = topic.replace('TYPE', alarmtype)
+                data = {'text': text, 'time': datetime.now(timezone.utc).isoformat()}
+                messages.append(MappedMessage(json.dumps(data), topic))
+        return messages
 
     @staticmethod
     def gettargettype(registerdef):
