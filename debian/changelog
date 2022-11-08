@@ -3,6 +3,7 @@ te-modbus-plugin (0.3.0) unstable; urgency=medium
   * Add register and coil mapping for Event
   * Add register mapping for Alarms
   * Raise alarm only on change of value
+  * Add data type hint for float/int parsing if a field has a length > 16 bit
 
  -- Mario Heidenreich <mario.heidenreich@softwareag.com>  Tue, 08 Nov 2022 14:22:54 +0100
 

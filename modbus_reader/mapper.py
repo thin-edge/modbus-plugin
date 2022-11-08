@@ -9,6 +9,10 @@ from datetime import datetime, timezone
 decoder_func = {
     'int16': lambda d: d.decode_16bit_int(),
     'uint16': lambda d: d.decode_16bit_uint(),
+    'int32': lambda d: d.decode_32bit_int(),
+    'uint32': lambda d: d.decode_32bit_uint(),
+    'int64': lambda d: d.decode_64bit_int(),
+    'uint64': lambda d: d.decode_64bit_uint(),
     'float32': lambda d: d.decode_32bit_float(),
     'float64': lambda d: d.decode_64bit_float()
 }
@@ -46,9 +50,9 @@ class ModbusMapper:
         is_litte_word_endian = self.device.get('littlewordendian') or False
         readregister = registerresponse.registers
         registertype = 'ir' if (registerdef.get('input') or False) else 'hr'
-        registerkey = f'${registerdef["number"]}:${registerdef["startbit"]}'
+        registerkey = f'{registerdef["number"]}:{registerdef["startbit"]}'
         if fieldlength > 16 and startbit > 0:
-            raise Exception('float values must align to the zero bit of the start register')
+            raise Exception('values spanning registers must align to the zero bit of the start register')
         if fieldlength > 16:
             value = self.parse_register_value(readregister, self.gettargettype(registerdef),
                                               little_endian=is_little_endian, word_endian=is_litte_word_endian)
@@ -98,7 +102,7 @@ class ModbusMapper:
         messages = []
         old_data = self.data.get(registertype).get(registerkey)
         # raise alarm if bit is 1
-        if old_data is not None and old_data == 0 and value > 0:
+        if (old_data is None or old_data == 0) and value > 0:
             severity = alarmmapping['severity'].lower()
             alarmtype = alarmmapping['type']
             text = alarmmapping['text']
@@ -126,13 +130,14 @@ class ModbusMapper:
 
     @staticmethod
     def gettargettype(registerdef):
+        dtype = 'int' if registerdef.get('datatype') == 'int' else 'float'
+        signed = 'u' if dtype == 'int' and registerdef.get('signed') == False else ''
+        length = 16
         if registerdef['nobits'] > 32:
-            return 'float64'
+            length = 64
         elif registerdef['nobits'] > 16:
-            return 'float32'
-        elif registerdef.get('signed') == False:
-            return 'uint16'
-        return 'int16'
+            length = 32
+        return f'{signed}{dtype}{length}'
 
     @staticmethod
     def parse_register_value(read_registers, target_type, little_endian, word_endian):
