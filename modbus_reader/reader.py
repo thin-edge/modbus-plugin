@@ -72,6 +72,9 @@ class ModbusPoll:
             if self.tedgeClient is not None and self.tedgeClient.is_connected():
                 self.tedgeClient.disconnect()
             self.tedgeClient = self.connect_to_thinedge()
+            for evt in self.poll_scheduler.queue:
+                self.poll_scheduler.cancel(evt)
+            self.polldata()
 
     def watchConfigFiles(self, configDir):
         event_handler = self.ConfigFileChangedHandler(self)
@@ -95,13 +98,12 @@ class ModbusPoll:
 
     def polldata(self):
         for device in self.devices:
-            self.polldevice(device)
-        self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldata, ())
+            mapper = ModbusMapper(device)
+            self.polldevice(device, mapper)
 
-    def polldevice(self, device):
+    def polldevice(self, device, mapper):
         self.logger.debug(f'Polling device {device["name"]}')
         client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
-        mapper = ModbusMapper(device)
 
         # read and handle all Registers
         if device.get('registers') is not None:
@@ -123,7 +125,6 @@ class ModbusPoll:
                         self.send_tedge_message(msg)
                 except ConnectionException as e:
                     self.logger.error(f'Failed to connect to device: {device["name"]}')
-                    return
                 except Exception as e:
                     self.logger.error(f'Failed to read and map register: {e}')
 
@@ -145,11 +146,11 @@ class ModbusPoll:
                         self.send_tedge_message(msg)
                 except ConnectionException as e:
                     self.logger.error(f'Failed to connect to device: {device["name"]}')
-                    return
                 except Exception as e:
                     self.logger.error(f'Failed to read and map register: {e}')
 
         client.close()
+        self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, mapper))
 
     def readbasedefinition(self, basepath):
         with open(basepath) as fileObj:
