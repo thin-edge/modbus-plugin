@@ -99,58 +99,136 @@ class ModbusPoll:
     def polldata(self):
         for device in self.devices:
             mapper = ModbusMapper(device)
-            self.polldevice(device, mapper)
+            poll_model = self.build_query_model(device)
+            self.polldevice(device, poll_model, mapper)
 
-    def polldevice(self, device, mapper):
-        self.logger.debug(f'Polling device {device["name"]}')
-        client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
+    def split_set(self, s):
+        partitions = []
+        v = list(s)
+        v.sort()
+        cur = []
+        i = 0
+        while i < len(v):
+            cur.append(v[i])
+            if i == len(v) - 1 or v[i + 1] > v[i] + 1:
+                partitions.append(cur)
+                cur = []
+            i = i + 1
+        return partitions
 
-        # read and handle all Registers
+    def build_query_model(self, device):
+        holding_registers = set()
+        input_register = set()
+        coils = set()
+        discret_input = set()
         if device.get('registers') is not None:
             for registerDefiniton in device['registers']:
-                try:
-                    registernumber = registerDefiniton['number']
-                    numregisters = int((registerDefiniton['startbit'] + registerDefiniton['nobits'] - 1) / 16) + 1
-                    if registerDefiniton.get('input') == True:
-                        result = client.read_input_registers(address=registernumber, count=numregisters,
-                                                             slave=device['address'])
-                    else:
-                        result = client.read_holding_registers(address=registernumber, count=numregisters,
-                                                               slave=device['address'])
-                    if result.isError():
-                        self.logger.error(f'Failed to read register: {result}')
-                        continue
-                    msgs = mapper.mapregister(result, registerDefiniton)
-                    for msg in msgs:
-                        self.send_tedge_message(msg)
-                except ConnectionException as e:
-                    self.logger.error(f'Failed to connect to device: {device["name"]}')
-                except Exception as e:
-                    self.logger.error(f'Failed to read and map register: {e}')
-
-        # read and handle all Coils
+                registernumber = registerDefiniton['number']
+                numregisters = int((registerDefiniton['startbit'] + registerDefiniton['nobits'] - 1) / 16)
+                registerend = registernumber + numregisters
+                registers = [x for x in range(registernumber, registerend + 1)]
+                if registerDefiniton.get('input') == True:
+                    input_register.update(registers)
+                else:
+                    holding_registers.update(registers)
         if device.get('coils') is not None:
             for coildefinition in device['coils']:
-                try:
-                    coilnumber = coildefinition['number']
-                    if coildefinition.get('input') == True:
-                        result = client.read_coils(address=coilnumber, count=1,
-                                                   slave=device['address'])
-                    else:
-                        result = client.read_discrete_inputs(address=coilnumber, count=1, slave=device['address'])
-                    if result.isError():
-                        self.logger.error(f'Failed to read coil: {result}')
-                        continue
-                    msgs = mapper.mapcoil(result, coildefinition)
-                    for msg in msgs:
-                        self.send_tedge_message(msg)
-                except ConnectionException as e:
-                    self.logger.error(f'Failed to connect to device: {device["name"]}')
-                except Exception as e:
-                    self.logger.error(f'Failed to read and map register: {e}')
+                coilnumber = coildefinition['number']
+                if coildefinition.get('input') == True:
+                    discret_input.add(coilnumber)
+                else:
+                    coils.add(coilnumber)
 
+        return (self.split_set(holding_registers), self.split_set(input_register), self.split_set(coils),
+                self.split_set(discret_input))
+
+    def read_register(self, buf, address=0, count=1):
+        return [buf[i] for i in range(address, address + count)]
+
+    def polldevice(self, device, pollmodel, mapper):
+        self.logger.debug(f'Polling device {device["name"]}')
+        coil_results, di_result, hr_results, ir_result, error = self.get_data_from_device(device, pollmodel)
+        if error is None:
+
+            # handle all Registers
+            if device.get('registers') is not None:
+                for registerDefiniton in device['registers']:
+                    try:
+                        registernumber = registerDefiniton['number']
+                        numregisters = int((registerDefiniton['startbit'] + registerDefiniton['nobits'] - 1) / 16) + 1
+                        if registerDefiniton.get('input') == True:
+                            result = self.read_register(ir_result, address=registernumber, count=numregisters)
+                        else:
+                            result = self.read_register(hr_results, address=registernumber, count=numregisters)
+                        msgs = mapper.mapregister(result, registerDefiniton)
+                        for msg in msgs:
+                            self.send_tedge_message(msg)
+                    except Exception as e:
+                        self.logger.error(f'Failed to map register: {e}')
+
+            # all Coils
+            if device.get('coils') is not None:
+                for coildefinition in device['coils']:
+                    try:
+                        coilnumber = coildefinition['number']
+                        if coildefinition.get('input') == True:
+                            result = self.read_register(di_result, address=coilnumber, count=1)
+                        else:
+                            result = self.read_register(coil_results, address=coilnumber, count=1)
+                        msgs = mapper.mapcoil(result, coildefinition)
+                        for msg in msgs:
+                            self.send_tedge_message(msg)
+                    except Exception as e:
+                        self.logger.error(f'Failed to map coils: {e}')
+
+        self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice,
+                                  (device, pollmodel, mapper))
+
+    def get_data_from_device(self, device, pollmodel):
+        client = ModbusTcpClient(host=device['ip'], port=device['port'], auto_open=True, auto_close=True, debug=True)
+        holdingregister, inputregisters, coils, discreteinput = pollmodel
+        hr_results = {}
+        ir_result = {}
+        coil_results = {}
+        di_result = {}
+        error = None
+        try:
+            for hr_range in holdingregister:
+                result = client.read_holding_registers(address=hr_range[0], count=hr_range[-1] - hr_range[0] + 1,
+                                                       slave=device['address'])
+                if result.isError():
+                    self.logger.error(f'Failed to read holding register: {result}')
+                    continue
+                hr_results.update(dict(zip(hr_range, result.registers)))
+            for ir_range in inputregisters:
+                result = client.read_input_registers(address=ir_range[0], count=ir_range[-1] - ir_range[0] + 1,
+                                                     slave=device['address'])
+                if result.isError():
+                    self.logger.error(f'Failed to read input registers: {result}')
+                    continue
+                ir_result.update(dict(zip(ir_range, result.registers)))
+            for coil_range in coils:
+                result = client.read_coils(address=coil_range[0], count=coil_range[-1] - coil_range[0] + 1,
+                                           slave=device['address'])
+                if result.isError():
+                    self.logger.error(f'Failed to read coils: {result}')
+                    continue
+                coil_results.update(dict(zip(coil_range, result.bits)))
+            for di_range in discreteinput:
+                result = client.read_discrete_inputs(address=di_range[0], count=di_range[-1] - di_range[0] + 1,
+                                                     slave=device['address'])
+                if result.isError():
+                    self.logger.error(f'Failed to read discrete input: {result}')
+                    continue
+                di_result.update(dict(zip(di_range, result.bits)))
+        except ConnectionException as e:
+            error = e
+            self.logger.error(f'Failed to connect to device: {device["name"]}: {e}')
+        except Exception as e:
+            error = e
+            self.logger.error(f'Failed to read: {e}')
         client.close()
-        self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice, (device, mapper))
+        return coil_results, di_result, hr_results, ir_result, error
 
     def readbasedefinition(self, basepath):
         with open(basepath) as fileObj:
@@ -165,7 +243,6 @@ class ModbusPoll:
         file_watcher_thread = threading.Thread(target=self.watchConfigFiles, args=[self.configdir])
         file_watcher_thread.daemon = True
         file_watcher_thread.start()
-        self.polldata()
         self.poll_scheduler.run()
 
     def send_tedge_message(self, msg: MappedMessage):

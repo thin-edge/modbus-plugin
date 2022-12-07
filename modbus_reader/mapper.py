@@ -7,6 +7,7 @@ from pymodbus.register_read_message import ReadRegistersResponseBase
 from datetime import datetime, timezone
 
 decoder_func = {
+    'float16': lambda d: d.decode_16bit_float(),
     'int16': lambda d: d.decode_16bit_int(),
     'uint16': lambda d: d.decode_16bit_uint(),
     'int32': lambda d: d.decode_32bit_int(),
@@ -42,13 +43,12 @@ class ModbusMapper:
     def __init__(self, device):
         self.device = device
 
-    def mapregister(self, registerresponse: ReadRegistersResponseBase, registerdef):
+    def mapregister(self, readregister, registerdef):
         messages = []
         startbit = registerdef['startbit']
         fieldlength = registerdef['nobits']
         is_little_endian = registerdef.get('littleendian') or False
         is_litte_word_endian = self.device.get('littlewordendian') or False
-        readregister = registerresponse.registers
         registertype = 'ir' if (registerdef.get('input') or False) else 'hr'
         registerkey = f'{registerdef["number"]}:{registerdef["startbit"]}'
         if fieldlength > 16 and startbit > 0:
@@ -86,11 +86,11 @@ class ModbusMapper:
         self.data[registertype][registerkey] = value
         return messages
 
-    def mapcoil(self, result: ReadBitsResponseBase, coildefinition):
+    def mapcoil(self, bits, coildefinition):
         messages = []
         registertype = 'di' if (coildefinition.get('input') or False) else 'co'
         registerkey = coildefinition["number"]
-        value = 1 if result.bits[0] else 0
+        value = 1 if bits[0] else 0
         if coildefinition.get('alarmmapping') is not None:
             messages.extend(self.checkalarm(value, coildefinition.get('alarmmapping'), registertype, registerkey))
         if coildefinition.get('eventmapping') is not None:
