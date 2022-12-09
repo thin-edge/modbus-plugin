@@ -1,5 +1,5 @@
 paho-mqtt~=1.6.1
-pymodbus==3.0.0
+pymodbus==3.0.2
 watchdog~=2.1.9
 pyfiglet~=0.8.post1
 pyModbusTCP

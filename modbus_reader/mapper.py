@@ -1,22 +1,7 @@
 import json
-
-from pymodbus.constants import Endian
-from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.bit_read_message import ReadBitsResponseBase
-from pymodbus.register_read_message import ReadRegistersResponseBase
+import struct
+import sys
 from datetime import datetime, timezone
-
-decoder_func = {
-    'float16': lambda d: d.decode_16bit_float(),
-    'int16': lambda d: d.decode_16bit_int(),
-    'uint16': lambda d: d.decode_16bit_uint(),
-    'int32': lambda d: d.decode_32bit_int(),
-    'uint32': lambda d: d.decode_32bit_uint(),
-    'int64': lambda d: d.decode_64bit_int(),
-    'uint64': lambda d: d.decode_64bit_uint(),
-    'float32': lambda d: d.decode_32bit_float(),
-    'float64': lambda d: d.decode_64bit_float()
-}
 
 topics = {
     'measurement': 'tedge/measurements/CHILD_ID',
@@ -43,6 +28,28 @@ class ModbusMapper:
     def __init__(self, device):
         self.device = device
 
+    def validate(self, registerdef):
+        startbit = registerdef['startbit']
+        fieldlength = registerdef['nobits']
+        if fieldlength > 64:
+            raise Exception(
+                f'definition of field length too long ({fieldlength}) for register {registerdef["number"]} at {startbit}')
+        if registerdef.get('datatype') == 'float' and fieldlength not in (16, 32, 64):
+            raise Exception('float values must have a length of 16, 32 or 64')
+
+    def parse_int(self, buffer, signed, mask):
+        fieldlength = mask.bit_length()
+        is_negative = buffer >> (fieldlength - 1) & 0x01
+        if signed and is_negative:
+            value = -(((buffer ^ mask) + 1) & mask)
+        else:
+            value = buffer & mask
+        return value
+
+    def parse_float(self, buffer, fieldlengt):
+        formats = {16: 'e', 32: 'f', 64: 'd'}
+        return struct.unpack(formats[fieldlengt], buffer.to_bytes(int(fieldlengt / 8), sys.byteorder))[0]
+
     def mapregister(self, readregister, registerdef):
         messages = []
         startbit = registerdef['startbit']
@@ -51,28 +58,25 @@ class ModbusMapper:
         is_litte_word_endian = self.device.get('littlewordendian') or False
         registertype = 'ir' if (registerdef.get('input') or False) else 'hr'
         registerkey = f'{registerdef["number"]}:{registerdef["startbit"]}'
-        if fieldlength > 16 and startbit > 0:
-            raise Exception('values spanning registers must align to the zero bit of the start register')
-        if fieldlength > 16:
-            value = self.parse_register_value(readregister, self.gettargettype(registerdef),
-                                              little_endian=is_little_endian, word_endian=is_litte_word_endian)
+        self.validate(registerdef)
+        # concat the registers in case we need to read across multiple registers
+        buffer = self.buffer_register(readregister, is_little_endian, is_litte_word_endian)
+        buflength = len(readregister) * 16
+        # shift and mask for the cases where the startbit > 0 and we are not reading the whole register as value
+        buffer = (buffer >> (buflength - (startbit + fieldlength)))
+
+        i = 1
+        mask = 1
+        while i < fieldlength:
+            mask = ((mask << 1) + 0x1)
+            i = i + 1
+
+        buffer = buffer & mask
+        if registerdef.get('datatype') == 'float':
+            value = self.parse_float(buffer, fieldlength)
         else:
-            # concat the registers in case we need to read across multiple registers
-            buffer = self.buffer_register(readregister, is_little_endian, is_litte_word_endian)
-            buflength = len(readregister) * 16
-            # shift and mask for the cases where the startbit > 0 and we are not reading the whole register as value
-            buffer = buffer >> (buflength - (startbit + fieldlength))
-            mask = 0xffff
-            i = 1
-            while i < len(readregister):
-                mask = (mask << 16) + 0xffff
-                i = i + 1
-            mask = mask >> (buflength - fieldlength)
-            is_negative = buffer >> (fieldlength - 1) & 0x01
-            if registerdef.get('signed') and is_negative:
-                value = -(((buffer ^ mask) + 1) & mask)
-            else:
-                value = buffer & mask
+            value = self.parse_int(buffer, registerdef.get('signed'), mask)
+
         if registerdef.get('measurementmapping') is not None:
             value = value * (registerdef.get('multiplier') or 1) * (
                     10 ** (registerdef.get('decimalshiftright') or 0)) / (
@@ -129,26 +133,8 @@ class ModbusMapper:
         return messages
 
     @staticmethod
-    def gettargettype(registerdef):
-        dtype = 'int' if registerdef.get('datatype') == 'int' else 'float'
-        signed = 'u' if dtype == 'int' and registerdef.get('signed') == False else ''
-        length = 16
-        if registerdef['nobits'] > 32:
-            length = 64
-        elif registerdef['nobits'] > 16:
-            length = 32
-        return f'{signed}{dtype}{length}'
-
-    @staticmethod
-    def parse_register_value(read_registers, target_type, little_endian, word_endian):
-        decoder = BinaryPayloadDecoder.fromRegisters(read_registers,
-                                                     byteorder=Endian.Little if little_endian else Endian.Big,
-                                                     wordorder=Endian.Little if word_endian else Endian.Big)
-        return decoder_func[target_type](decoder)
-
-    @staticmethod
     def buffer_register(register: list, litte_endian, is_litte_word_endian):
-        buf = 0x0000000000000000
+        buf = 0x00
 
         if is_litte_word_endian:
             for reg in reversed(register):

@@ -1,6 +1,3 @@
-import os.path
-
-from pkg_resources import parse_requirements
 from setuptools import setup, find_packages
 
 setup(
@@ -13,7 +10,7 @@ setup(
     license='MIT',
     install_requires=[
         'paho-mqtt~=1.6.1',
-        'pymodbus==3.0.0',
+        'pymodbus==3.0.2',
         'watchdog',
         'pyfiglet',
         'tomli~=2.0.1',
