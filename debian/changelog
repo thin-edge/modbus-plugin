@@ -1,3 +1,13 @@
+te-modbus-plugin (0.4.0) unstable; urgency=medium
+
+  * Reimplement polling to poll server as few times as possible per run
+  * Add capability to parse float16 values
+  * Make int default for all parsing, use datatype="float" in case you need float
+  * Change parsing implementation to allow more combinations of registers
+  * Bump version of pymodbus
+
+ -- Mario Heidenreich <mario.heidenreich@softwareag.com>  Fri, 09 Dec 2022 14:24:48 +0100
+
 te-modbus-plugin (0.3.0) unstable; urgency=medium
 
   * Add register and coil mapping for Event
