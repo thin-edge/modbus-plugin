@@ -16,7 +16,8 @@ from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
-from modbus_reader.mapper import MappedMessage, ModbusMapper
+from mapper import MappedMessage, ModbusMapper
+from smartresttemplates import SMARTREST_TEMPLATES
 
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
@@ -72,6 +73,10 @@ class ModbusPoll:
             if self.tedgeClient is not None and self.tedgeClient.is_connected():
                 self.tedgeClient.disconnect()
             self.tedgeClient = self.connect_to_thinedge()
+            
+            #If connected to tedge, send Smart Rest Templates
+            self.send_smartrest_templates()
+
             for evt in self.poll_scheduler.queue:
                 self.poll_scheduler.cancel(evt)
             self.polldata()
@@ -263,6 +268,11 @@ class ModbusPoll:
                 self.logger.error(f'Failed to connect to thin-edge: {e}')
                 time.sleep(5)
 
+    def send_smartrest_templates(self):
+        self.logger.debug(f'Send smart rest templates to tedge broker')
+        topic = "c8y/s/ut/modbus2"
+        for template in SMARTREST_TEMPLATES:
+            self.send_tedge_message(MappedMessage(template,topic))
 
 def main():
     try:
