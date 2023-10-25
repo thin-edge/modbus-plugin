@@ -270,7 +270,7 @@ class ModbusPoll:
 
     def send_smartrest_templates(self):
         self.logger.debug(f'Send smart rest templates to tedge broker')
-        topic = "c8y/s/ut/modbus2"
+        topic = "c8y/s/ut/modbus"
         for template in SMARTREST_TEMPLATES:
             self.send_tedge_message(MappedMessage(template,topic))
 
