@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 import argparse
+import json
 import logging
 import os.path
 import sched
@@ -16,8 +17,8 @@ from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
-from mapper import MappedMessage, ModbusMapper
-from smartresttemplates import SMARTREST_TEMPLATES
+from modbus_reader.mapper import MappedMessage, ModbusMapper
+from modbus_reader.smartresttemplates import SMARTREST_TEMPLATES
 
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
@@ -73,10 +74,11 @@ class ModbusPoll:
             if self.tedgeClient is not None and self.tedgeClient.is_connected():
                 self.tedgeClient.disconnect()
             self.tedgeClient = self.connect_to_thinedge()
-            
-            #If connected to tedge, send Smart Rest Templates
+            #If connected to tedge, register service, update config and send smart rest template
+            time.sleep(5)
+            self.registerService()
             self.send_smartrest_templates()
-
+            self.updateBaseConfigOnDevice(self.baseconfig)
             for evt in self.poll_scheduler.queue:
                 self.poll_scheduler.cancel(evt)
             self.polldata()
@@ -185,6 +187,8 @@ class ModbusPoll:
                             self.send_tedge_message(msg)
                     except Exception as e:
                         self.logger.error(f'Failed to map coils: {e}')
+        else:
+            self.logger.error(f'Failed to poll device {device["name"]}: {error}')
 
         self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice,
                                   (device, pollmodel, mapper))
@@ -273,6 +277,24 @@ class ModbusPoll:
         topic = "c8y/s/ut/modbus"
         for template in SMARTREST_TEMPLATES:
             self.send_tedge_message(MappedMessage(template,topic))
+
+    def updateBaseConfigOnDevice(self, baseconfig):
+        self.logger.debug(f'Update base config on device')
+        topic = "te/device/main///twin/c8y_ModbusConfiguration"        
+        transmit_rate = baseconfig['modbus'].get('pollrate')
+        polling_rate = baseconfig['modbus'].get('pollinterval')        
+        config = {
+            "transmitRate": transmit_rate if transmit_rate is not None else None,
+            "pollingRate": polling_rate if polling_rate is not None else None,
+        }
+        self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+    
+    def registerService(self):
+        self.logger.debug(f'Register tedge service on device')
+        topic = "te/device/main/service/tedge-modbus-plugin"
+        data = {"@type":"service","name":"tedge-modbus-plugin","type":"service"}
+        self.send_tedge_message(MappedMessage(json.dumps(data),topic))
+
 
 def main():
     try:

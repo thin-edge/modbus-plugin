@@ -15,7 +15,7 @@ setup(
         'pyfiglet',
         'tomli~=2.0.1',
         'pyserial-asyncio'],
-    packages=find_packages(),
+    packages=['modbus_reader'],
     data_files=[('config/devices.toml', ['config/devices.toml']), ('config/modbus.toml', ['config/modbus.toml'])],
     entry_points=dict(
         console_scripts=['te-modbus-reader=modbus_reader.reader:main']

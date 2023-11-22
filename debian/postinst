@@ -6,6 +6,7 @@ set -e
 
 # Enable the service only if systemctl is available
 if command -v systemctl >/dev/null; then
-        systemctl start te-modbus-plugin.service
+        #systemctl start te-modbus-plugin.service
         systemctl enable te-modbus-plugin.service
+        tedge config set c8y.smartrest.templates modbus
 fi

@@ -1,0 +1,61 @@
+{
+  "server_list": {
+    "server": {
+      "comm": "tcp",
+      "host": "0.0.0.0",
+      "port": 502,
+      "framer": "socket"
+    }
+  },
+  "device_list": {
+    "device": {
+      "setup": {
+        "co size": 63000,
+        "di size": 63000,
+        "hr size": 63000,
+        "ir size": 63000,
+        "shared blocks": true,
+        "type exception": true,
+        "defaults": {
+          "value": {
+            "bits": 0,
+            "uint16": 0,
+            "uint32": 0,
+            "float32": 0.0,
+            "string": " "
+          },
+          "action": {
+            "bits": null,
+            "uint16": null,
+            "uint32": null,
+            "float32": null,
+            "string": null
+          }
+        }
+      },
+      "invalid": [1],
+      "write": [3],
+      "bits": [
+        {
+          "addr": 2,
+          "value": -2,
+          "action": "increment"
+        }
+      ],
+      "uint16": [
+        {
+          "addr": 3,
+          "value": 17001
+        },
+        2100
+      ],
+      "uint32": [
+        { "addr": [4, 5], "value": 617001, "action": null },
+        [3037, 3038]
+      ],
+      "float32": [{ "addr": [6, 7], "value": 404.17 }, [4100, 4101]],
+      "string": [5047, { "addr": [16, 19], "value": "THINEDGE" }],
+      "repeat": []
+    }
+  }
+}

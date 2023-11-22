@@ -1,14 +1,14 @@
 [[device]]
-name="Test" # name of the child device (will be auto-generated on first message)
+name="TestCase1" # name of the child device (will be auto-generated on first message)
 #type="Modbus-Thinedge"
 address=1 # Modbus slave number
-ip="127.0.0.1" # Modbus server IP
+ip="simulator" # Modbus server IP
 port=502 # Modbus server Port
 protocol="TCP" # only support for TCP now
-littlewordendian=true
+littlewordendian=false
 
 [[device.registers]]
-number=0 # register number
+number=3 # register number
 startbit=0 # where to start to read in the register
 nobits=16 # length of field to read
 signed=true
@@ -17,94 +17,25 @@ divisor=1
 decimalshiftright=0
 input=false # true = Input Register false = Holding Register
 #see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
-measurementmapping.templatestring="{\"sag_Temperature\":{\"T\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
+measurementmapping.templatestring="{\"Test\":{\"Int16\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
+
 
 [[device.registers]]
-number=1
-startbit=0
-nobits=16
+number=6 
+startbit=0 
+nobits=32 
 signed=false
 multiplier=1
 divisor=1
+decimalshiftright=0
 input=false
-measurementmapping.templatestring="{\"sag_Pressure\":{\"P\":%% }}"
-
-[[device.registers]]
-number=2
-startbit=0
-nobits=32
-signed=false
-multiplier=1
-divisor=1
-input=false
-measurementmapping.templatestring="{\"sag_PressureFloat\":{\"P\":%% }}"
-
-[[device.registers]]
-number=4
-startbit=0
-nobits=4
-signed=false
-multiplier=1
-divisor=1
-input=false
-measurementmapping.templatestring="{\"sag_Flags1\":{\"P\":%% }}"
-
-[[device.registers]]
-number=4
-startbit=4
-nobits=8
-signed=true
-multiplier=1
-divisor=1
-input=false
-decimalshiftright=1
-measurementmapping.templatestring="{\"sag_Status\":{\"P\":%% }}"
-
-[[device.registers]]
-number=4
-startbit=8
-nobits=4
-signed=false
-multiplier=1
-divisor=1
-input=false
-measurementmapping.templatestring="{\"sag_Flags2\":{\"P\":%% }}"
-
-[[device.registers]]
-number=4
-startbit=0
-nobits=16
-signed=false
-multiplier=1
-divisor=1
-input=false
-measurementmapping.templatestring="{\"sag_Flags2\":{\"P\":%% }}"
-
-[[device.registers]]
-number=5
-startbit=0
-nobits=32
-signed=false
-multiplier=1
-divisor=1
-input=false
-measurementmapping.templatestring="{\"sag_LittleWord\":{\"P\":%% }}"
-
-[[device.registers]]
-number=7
-startbit=0
-nobits=16
-signed=false
-multiplier=1
-divisor=1
-input=false
-littleendian=true
-measurementmapping.templatestring="{\"sag_LittleEndian\":{\"P\":%% }}"
+datatype="float"
+measurementmapping.templatestring="{\"Test\":{\"Float32\":%% }}"
 
 
 [[device.coils]]
-number=0
+number=2
 input=false
 alarmmapping.severity="MAJOR"
-alarmmapping.text="Something went wrong"
-alarmmapping.type="sag_RaiseAlarm"
+alarmmapping.text="This alarm should be created once"
+alarmmapping.type="TestAlarm"
