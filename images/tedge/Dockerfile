@@ -54,6 +54,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     /tmp/te-modbus-plugin_0.4.0_all.deb \
     && rm /tmp/te-modbus-plugin_0.4.0_all.deb
+
+#Add confguration plugin config
+COPY images/tedge/tedge-configuration-plugin.toml /etc/tedge/plugins/tedge-configuration-plugin.toml
+COPY images/tedge/tedge-log-plugin.toml /etc/tedge/plugins/tedge-log-plugin.toml
+#Add logfile plugin config
+
+
+
 #Install Dependencys
 # RUN apt-get update \
 #     && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install \
