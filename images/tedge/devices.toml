@@ -1,0 +1,41 @@
+[[device]]
+name="TestCase1" # name of the child device (will be auto-generated on first message)
+#type="Modbus-Thinedge"
+address=1 # Modbus slave number
+ip="simulator" # Modbus server IP
+port=502 # Modbus server Port
+protocol="TCP" # only support for TCP now
+littlewordendian=false
+
+[[device.registers]]
+number=3 # register number
+startbit=0 # where to start to read in the register
+nobits=16 # length of field to read
+signed=true
+multiplier=1
+divisor=1
+decimalshiftright=0
+input=false # true = Input Register false = Holding Register
+#see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
+measurementmapping.templatestring="{\"Test\":{\"Int16\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
+
+
+[[device.registers]]
+number=6 
+startbit=0 
+nobits=32 
+signed=false
+multiplier=1
+divisor=1
+decimalshiftright=0
+input=false
+datatype="float"
+measurementmapping.templatestring="{\"Test\":{\"Float32\":%% }}"
+
+
+[[device.coils]]
+number=2
+input=false
+alarmmapping.severity="MAJOR"
+alarmmapping.text="This alarm should be created once"
+alarmmapping.type="TestAlarm"

@@ -1,2 +1,4 @@
 config/devices.toml etc/tedge/plugins/modbus/
 config/modbus.toml etc/tedge/plugins/modbus/
+operations/c8y_ModbusConfiguration/dist/c8y_ModbusConfiguration /etc/tedge/plugins/modbus/
+operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration  /etc/tedge/operations/c8y/

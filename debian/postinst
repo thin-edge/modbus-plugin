@@ -9,4 +9,6 @@ if command -v systemctl >/dev/null; then
         #systemctl start te-modbus-plugin.service
         systemctl enable te-modbus-plugin.service
         tedge config set c8y.smartrest.templates modbus
+        chmod 777 etc/tedge/plugins/modbus/modbus.toml
+        chmod 777 etc/tedge/plugins/modbus/devices.toml
 fi

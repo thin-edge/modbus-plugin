@@ -3,7 +3,7 @@
 import logging
 import sys
 from paho.mqtt import client as mqtt_client
-import requests
+import json
 import toml
 
 logger = logging.getLogger("c8y_ModbusConfiguration")
@@ -17,83 +17,55 @@ logger.info(f'New c8y_ModbusConfiguration operation')
 broker = 'localhost'
 port = 1883
 client_id = "c8y_ModbusConfiguration-operation-client"
+config_path = "/etc/tedge/plugins/modbus/modbus.toml"
 
-# fileDir = "/etc/tedge"
-# fileName = f'{__name__}.toml'
 
-# configFile = f'{fileDir}/{fileName}'
 #Connect to local thin edge broker
 logger.debug(f'Connecting to local thin-edge broker at {broker}:{port}')
 client = mqtt_client.Client(client_id)
 client.connect(broker, port)
 logger.info(f'Mtqq client with id {client_id} connected to local thin-edge broker at {broker}:{port}')
 try:
-    #Set operation status to executing
-    client.publish('c8y/s/us',f'501,{"c8y_ModbusConfiguration"}')
-
-    #Check and store arguments
     arguments = sys.argv[1].split(',')
-    if len(arguments) != 8:
-        raise ValueError("Expected 8 arguments in smart rest template. Got " + str(len(arguments)) + ".")
-    modbusType = arguments[2]
-    modbusAddress = arguments[3]
-    childName = arguments[4]
-    modbusServer = arguments[5]
-    #deviceId = array[6]
-    mappingPath = arguments[7]
+    if len(arguments) != 4:
+        raise ValueError("Expected 4 arguments in smart rest template. Got " + str(len(arguments)) + ".")
+    logger.debug(f'Arguments: {arguments}')
+    transmit_rate = int(arguments[2])
+    polling_rate = int(arguments[3])
+    logger.debug(f'transmitRate: {transmit_rate} pollingRate: {polling_rate}')
 
-    #Get the mapping json via rest
-    url = f'http://{broker}:8001/c8y{mappingPath}'
-    logger.debug(f'Getting mapping json from {url}')
-    response = requests.get(url)
-    logger.info(f'Got mapping json from {url} with response {response.status_code}')
-    if response.status_code != 200:
-        raise Exception(f'Error getting mapping at {mappingPath}. Got response {response.status_code} from {url}. Expected 200.')
-    mappingJson = response.json()
-    # logger.debug(f'Got mapping json: {mappingJson}')
-    #Create the mapping toml
-    #Device data
-    mappingToml = {}
-    mappingToml["device"] = [{}]
-    mappingToml["device"][0]["address"]=modbusAddress
-    mappingToml["device"][0]["name"]=childName
-    mappingToml["device"][0]["address"]=modbusAddress
-    mappingToml["device"][0]["ip"]=modbusServer
-    mappingToml["device"][0]["port"]=502
-    mappingToml["device"][0]["protocol"]="TCP" #Only support for TCP
-    mappingToml["device"][0]["littlewordendian"]=True
+    #Get device configuration
+    logger.info(f'Read mapping toml from {config_path}')
+    modbus_config = toml.load(config_path)    
+    logger.debug(f'Current configuration: {modbus_config}')
 
-    #Registers
-    mappingToml["device"][0]["registers"] = [{}]*len(mappingJson["c8y_Registers"])
-    for i,c8yRegister in enumerate(mappingJson["c8y_Registers"]):
+    #Update configuration
+    modbus_config['modbus']['transmitinterval'] = transmit_rate
+    modbus_config['modbus']['pollinterval'] = polling_rate
 
-        mappingToml["device"][0]["registers"][i]["number"]=c8yRegister["number"]
-        mappingToml["device"][0]["registers"][i]["startbit"]=c8yRegister["startBit"]
-        mappingToml["device"][0]["registers"][i]["nobits"]=c8yRegister["noBits"]
-        mappingToml["device"][0]["registers"][i]["signed"]=c8yRegister["signed"]
-        mappingToml["device"][0]["registers"][i]["multiplier"]=c8yRegister["multiplier"]
-        mappingToml["device"][0]["registers"][i]["divisor"]=c8yRegister["divisor"]
-        mappingToml["device"][0]["registers"][i]["decimalshiftright"]=c8yRegister["offset"]
+    #Save to file
+    logger.info(f'Saving new configuration to {config_path}')
+    with open(config_path, 'w') as f:
+        toml.dump(modbus_config, f)
+    logger.info(f'New configuration saved to {config_path}')
 
-        #Measurements
-        if "measurementMapping" in c8yRegister:
-             mappingToml["device"][0]["registers"][i]["measurementmapping.templatestring"]=f'{{\\"{c8yRegister["measurementMapping"]["type"]}\\":{{\\"{c8yRegister["measurementMapping"]["series"]}\\":%%}} }}'
 
-    logger.debug(f'Created mapping toml: {mappingToml}')
-    #Store the mapping toml:
-    pathToConfig = "/etc/tedge/plugins/modbus/device.toml" 
-    logger.debug(f'Storing mapping toml at {pathToConfig}')
+    #Update managedObject
+    logger.debug(f'Updating managedObject with new configuration')
+    topic = "te/device/main///twin/c8y_ModbusConfiguration"    
+      
+    config = {
+            "transmitRate": transmit_rate if transmit_rate is not None else None,
+            "pollingRate": polling_rate if polling_rate is not None else None,
+    }
+    client.publish(topic, json.dumps(config))
 
-    tomlString = toml.dumps(mappingToml)
-    with open(pathToConfig, "w") as tomlFile:
-        tomlFile.write(tomlString)
-    logger.info(f'Stored mapping toml at {pathToConfig}')
 
     #Set operation status to success
-    client.publish('c8y/s/us',f'503,{"c8y_ModbusConfiguration"},')
+    client.publish('c8y/s/us',"503,c8y_ModbusConfiguration")
 
 
 
 except Exception as e:
-    client.publish('c8y/s/us',f'502,{"c8y_ModbusConfiguration"},"Error: {e}"')
+    client.publish('c8y/s/us',f'502,c8y_ModbusConfiguration,"Error: {e}"')
     logger.error(f'Error: {e}')
