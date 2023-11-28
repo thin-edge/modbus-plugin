@@ -2,27 +2,34 @@ set dotenv-load := true
 
 # Start the demo
 up *args="":
-    docker-compose up --build {{args}}
+    docker compose up --build {{args}}
 
 # Stop the demo
 down *args="":
-    docker-compose down {{args}}
+    docker compose down {{args}}
 
 # Stop the demo and destroy the data
 down-all:
-    docker-compose down -v
+    docker compose down -v
+
+# Install python virtual environment
+venv:
+  [ -d .venv ] || python3 -m venv .venv
+  ./.venv/bin/pip3 install -r tests/requirements.txt
+
+# Run tests
+test *args='':
+  ./.venv/bin/python3 -m robot.run --outputdir output {{args}} tests
 
 # Configure and register the device to the cloud
 bootstrap *args="":
-    docker-compose exec --env "DEVICE_ID=${DEVICE_ID:-}" --env "C8Y_BASEURL=${C8Y_BASEURL:-}" --env "C8Y_USER=${C8Y_USER:-}" --env "C8Y_PASSWORD=${C8Y_PASSWORD:-}" tedge bootstrap.sh {{args}}
+    docker compose exec --env "DEVICE_ID=${DEVICE_ID:-}" --env "C8Y_BASEURL=${C8Y_BASEURL:-}" --env "C8Y_USER=${C8Y_USER:-}" --env "C8Y_PASSWORD=${C8Y_PASSWORD:-}" tedge bootstrap.sh {{args}}
 
 # Start a shell
 shell *args='bash':
-    docker-compose exec tedge {{args}}
+    docker compose exec tedge {{args}}
 
-# Start modbus plugin
-modbus-plugin:
-    docker-compose exec tedge python3 /app/reader.py
+
 
 # Clean up
 clean-up:

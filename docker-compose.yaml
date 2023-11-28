@@ -3,6 +3,7 @@ services:
   tedge:
     build:
       dockerfile: images/tedge/Dockerfile
+      context: .
     privileged: true
     ports:
       - "1883:1883"
@@ -10,6 +11,7 @@ services:
   simulator:
     build:
       dockerfile: images/simulator/Dockerfile
+      context: .
     privileged: true
     ports:
       - "8080:8080"
