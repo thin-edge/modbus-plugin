@@ -53,16 +53,6 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      #
-      # Build
-      #
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '>=1.17.0'
-      - name: Install dependencies
-        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
-      - name: Build package (for testing)
-        run: just build
 
       #
       # Test
