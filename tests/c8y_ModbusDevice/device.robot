@@ -6,7 +6,5 @@ Suite Setup     Set Main Device
 
 
 *** Test Cases ***
-
-
-Device should support the operation c8y_ModbusConfiguration
-    Cumulocity.Should Contain Supported Operations    c8y_ModbusDevice    c8y_ModbusConfiguration
+Device should support the operation c8y_ModbusDevice
+    Cumulocity.Should Contain Supported Operations    c8y_ModbusDevice

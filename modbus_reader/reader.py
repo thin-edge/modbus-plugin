@@ -79,6 +79,7 @@ class ModbusPoll:
             self.registerService()
             self.send_smartrest_templates()
             self.updateBaseConfigOnDevice(self.baseconfig)
+            self.updateModbusInfoOnChildDevices(self.devices)
             for evt in self.poll_scheduler.queue:
                 self.poll_scheduler.cancel(evt)
             self.polldata()
@@ -275,8 +276,9 @@ class ModbusPoll:
     def send_smartrest_templates(self):
         self.logger.debug(f'Send smart rest templates to tedge broker')
         topic = "c8y/s/ut/modbus"
-        for template in SMARTREST_TEMPLATES:
-            self.send_tedge_message(MappedMessage(template,topic))
+        template = '\n'.join(str(template) for template in SMARTREST_TEMPLATES)
+        
+        self.send_tedge_message(MappedMessage(template,topic))
 
     def updateBaseConfigOnDevice(self, baseconfig):
         self.logger.debug(f'Update base config on device')
@@ -288,6 +290,19 @@ class ModbusPoll:
             "pollingRate": polling_rate if polling_rate is not None else None,
         }
         self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+
+    def updateModbusInfoOnChildDevices(self, devices):
+        for device in devices:
+            self.logger.debug(f'Update modbus info on child device')
+            topic = f"te/device/{device['name']}///twin/c8y_ModbusDevice"
+            config = {
+                "ipAddress": device['ip'],
+                "protocol": device['port'],
+                "address": device['address'],
+                "protocol": device['protocol'],
+            }
+            self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+
     
     def registerService(self):
         self.logger.debug(f'Register tedge service on device')

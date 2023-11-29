@@ -38,7 +38,7 @@ RUN . /opt/venv/bin/activate && pip install -r /build/requirements.txt
 # Copy and build operations
 COPY operations /build/operations
 RUN . /opt/venv/bin/activate && exec pyinstaller ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration.py --onefile --distpath ./operations/c8y_ModbusConfiguration/dist
-
+RUN . /opt/venv/bin/activate && exec pyinstaller ./operations/c8y_ModbusDevice/c8y_ModbusDevice.py --onefile --distpath ./operations/c8y_ModbusDevice/dist
 
 # Build python wheel
 RUN . /opt/venv/bin/activate && exec python -m build
