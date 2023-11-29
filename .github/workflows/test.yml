@@ -63,7 +63,7 @@ jobs:
 
       - name: Start demo
         run: |
-          just up
+          just up -d
           just bootstrap --no-prompt
 
       - name: Run tests
@@ -86,19 +86,19 @@ jobs:
         run: |
           just cleanup "$DEVICE_ID"
 
-  generate_report:
-    name: Publish report
-    if: ${{ always() && github.event_name == 'pull_request_target' }}
-    needs: [test]
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Download reports
-      uses: actions/download-artifact@v3
-      with:
-        name: reports
-        path: reports
-    - name: Send report to commit
-      uses: joonvena/robotframework-reporter-action@v2.1
-      with:
-        gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+  # generate_report:
+  #   name: Publish report
+  #   if: ${{ always() && github.event_name == 'pull_request_target' }}
+  #   needs: [test]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - name: Download reports
+  #     uses: actions/download-artifact@v3
+  #     with:
+  #       name: reports
+  #       path: reports
+  #   - name: Send report to commit
+  #     uses: joonvena/robotframework-reporter-action@v2.1
+  #     with:
+  #       gh_access_token: ${{ secrets.GITHUB_TOKEN }}
