@@ -17,8 +17,8 @@ from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
-from modbus_reader.mapper import MappedMessage, ModbusMapper
-from modbus_reader.smartresttemplates import SMARTREST_TEMPLATES
+from mapper import MappedMessage, ModbusMapper
+from smartresttemplates import SMARTREST_TEMPLATES
 
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
@@ -241,12 +241,21 @@ class ModbusPoll:
         return coil_results, di_result, hr_results, ir_result, error
 
     def readbasedefinition(self, basepath):
-        with open(basepath) as fileObj:
-            return tomli.loads(fileObj.read())
+        if os.path.exists(basepath):
+            with open(basepath) as fileObj:
+                return tomli.loads(fileObj.read())
+        else:
+            self.logger.error(f'Base config file {basepath} not found')
+            return {}
+ 
 
     def readdevicedefinition(self, devicepath):
-        with open(devicepath) as deviceObj:
-            return tomli.loads(deviceObj.read())
+        if os.path.exists(devicepath):
+            with open(devicepath) as deviceObj:
+                return tomli.loads(deviceObj.read())
+        else:
+            self.logger.error(f'Device config file {devicepath} not found')
+            return {}
 
     def startpolling(self):
         self.reread_config()
