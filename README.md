@@ -131,6 +131,15 @@ As of now, the plugin only supports the following operations:
 - c8y_ModbusDevice
 - Mapping of registers to Measurements with c8y_ModbusConfiguration
 
+To create a Cloud Fieldbus Device in Cumulocity IoT, you need first to create a Modbus protocol. Open the Device protocols page in your Device Management and add a new Modbus protocol.
+The configuration of your protocol depends on your Modbus Server. If you are using the Modbus Demo simulator, the you can use the following configuration:
+
+![Image](./doc/protocol.png)
+
+After creating the protocol, you can add a new Cloud Fieldbus Device. Select the Modubs Tab on your thin-edge.io and add a new tcp device. If you are using the Modbus Demo simulator, you need to add the IP-Address of your Docker host, as Hostnames are not supported by the UI.
+
+![Image](./doc/tcp_device.png)
+
 ## Testing
 
 To run the tests locally, you need to provide your Cumulocity credentials as environment variables in a .env file:
