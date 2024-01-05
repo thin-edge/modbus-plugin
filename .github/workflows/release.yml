@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get package version
+        run: |
+          export VERSION=$(grep -m 1 'version:' nfpm.yaml | awk '{print $2}' | tr -d '"')
+          echo "Extracted version: $VERSION"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+      
+      - name: Create dist folder
+        run: |
+          mkdir dist
+
+      - name: Build with nfpm
+        run: |
+          docker run --rm -v $PWD:/tmp -w /tmp goreleaser/nfpm package \
+            --config /tmp/nfpm.yaml \
+            --target /tmp/dist \
+            --packager deb
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: Release ${{ env.VERSION }}
+          draft: true
+          prerelease: false
+
+      - name: Upload Release Asset Frontend
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/modbus-plugin_${{ env.VERSION }}_all.deb
+          asset_name: modbus-plugin_${{ env.VERSION }}_all.deb
+          asset_content_type: application/octet-stream
