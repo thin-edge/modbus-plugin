@@ -57,8 +57,8 @@ After starting the containers, you need to register the thin-edge.io on your ten
 This will create a device certificate in the tedge container and upload it to your tenant. To skip the manual input of your credentials, you create a .env file in your working directory:
 
     C8Y_BASEURL=https://<tenant>.cumulocity.com
-    C8Y_BOOTSTRAP_USER=<user>
-    C8Y_BOOTSTRAP_PASSWORD=<password>
+    C8Y_USER=<user>
+    C8Y_PASSWORD=<password>
     DEVICE_ID=<External ID of your Test Device>
 
 You can skip the manual bootstrap process by running:
@@ -158,8 +158,8 @@ After creating the protocol, you can add a new Cloud Fieldbus Device. Select the
 To run the tests locally, you need to provide your Cumulocity credentials as environment variables in a .env file:
 
     C8Y_BASEURL=https://<tenant>.cumulocity.com
-    C8Y_BOOTSTRAP_USER=<user>
-    C8Y_BOOTSTRAP_PASSWORD=<password>
+    C8Y_USER=<user>
+    C8Y_PASSWORD=<password>
     DEVICE_ID=<External ID of your Test Device>
 
 If you have the simulator and the tedge container running, you can run the tests with:

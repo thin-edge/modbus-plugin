@@ -2,7 +2,7 @@ set dotenv-load := true
 
 # Start the demo
 up *args="":
-    docker-compose up --build {{args}}
+    docker compose up --build {{args}}
 
 # Stop the demo
 down *args="":
