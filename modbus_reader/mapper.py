@@ -6,9 +6,9 @@ import sys
 from datetime import datetime, timezone
 
 topics = {
-    'measurement': 'te/device/CHILD_ID///m',
-    'event': 'te/device/CHILD_ID///e',
-    'alarm': 'te/device/CHILD_ID///a'
+    'measurement': 'te/device/CHILD_ID///m/',
+    'event': 'te/device/CHILD_ID///e/',
+    'alarm': 'te/device/CHILD_ID///a/'
 }
 
 
