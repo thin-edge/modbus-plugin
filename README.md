@@ -46,11 +46,24 @@ The modbus simulator runs a modbus server with some example registers. The simul
 
 The demo includes a example device that maps an integer and float register to a Child Device. The device config can be found in the [images/tedge/config](./images/tedge/config) folder.
 
+To start the containers, you need to have docker-compose installed. You can start the containers with:
+
+    just up
+
 After starting the containers, you need to register the thin-edge.io on your tenant. You can do this by running the following command:
 
     just bootstrap
 
-This will create a device certificate in the tedge container and upload it to your tenant.
+This will create a device certificate in the tedge container and upload it to your tenant. To skip the manual input of your credentials, you create a .env file in your working directory:
+
+    C8Y_BASEURL=https://<tenant>.cumulocity.com
+    C8Y_BOOTSTRAP_USER=<user>
+    C8Y_BOOTSTRAP_PASSWORD=<password>
+    DEVICE_ID=<External ID of your Test Device>
+
+You can skip the manual bootstrap process by running:
+
+    just bootstrap --no-prompt
 
 ## Config files
 
