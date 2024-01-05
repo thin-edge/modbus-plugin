@@ -1,0 +1,61 @@
+# nfpm configuration file
+#
+# check https://nfpm.goreleaser.com/configuration for detailed usage
+#
+name: "modbus-plugin"
+arch: "all"
+platform: "linux"
+version: "0.0.1"
+section: "default"
+priority: "extra"
+maintainer: techforum.softwareag.com
+description: "Modbus plugin for the thin-edge.io"
+homepage: "https://github.com/thin-edge/modbus-plugin"
+license: "Apache-2.0"
+replaces:
+#- modbus-plugin
+provides:
+#- modbus-plugin
+depends:
+  - python (>= 3.8.0) | python3 (>= 3.8.0)
+  - python3-venv
+contents:
+  # pip3 requirements
+- src: ./requirements.txt
+  dst: /etc/tedge/plugins/modbus/requirements.txt
+  #modbus reader files
+- src: ./modbus_reader/
+  dst: /etc/tedge/plugins/modbus/modbus_reader/
+  #c8y_ModbusConfiguration
+- src: ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration
+  dst: /etc/tedge/operations/c8y/c8y_ModbusConfiguration
+  file_info:
+      mode: 0644
+- src: ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration.py
+  dst: /etc/tedge/plugins/modbus/c8y_ModbusConfiguration.py
+  file_info:
+      mode: 0555
+  #c8y_ModbusDevice
+- src: ./operations/c8y_ModbusDevice/c8y_ModbusDevice
+  dst: /etc/tedge/operations/c8y/c8y_ModbusDevice
+  file_info:
+      mode: 0644
+- src: ./operations/c8y_ModbusDevice/c8y_ModbusDevice.py
+  dst: /etc/tedge/plugins/modbus/c8y_ModbusDevice.py
+  file_info:
+      mode: 0555
+  # Empty modbus config
+# - dst: /etc/tedge/plugins/modbus/modbus.toml
+#   type: config
+#   # Empty device config
+# - dst: /etc/tedge/plugins/modbus/devices.toml
+#   type: config
+
+  # Logfile folder
+- dst: /var/log/te-modbus-plugin
+  type: dir
+
+overrides:
+  deb:
+    scripts:
+      postinstall: ./scripts/postinstall.sh
