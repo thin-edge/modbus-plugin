@@ -24,7 +24,7 @@ config_path = "/etc/tedge/plugins/modbus/modbus.toml"
 logger.debug(f'Connecting to local thin-edge broker at {broker}:{port}')
 client = mqtt_client.Client(client_id)
 client.connect(broker, port)
-logger.info(f'Mtqq client with id {client_id} connected to local thin-edge broker at {broker}:{port}')
+logger.info(f'MQTT client with id {client_id} connected to local thin-edge broker at {broker}:{port}')
 try:
     arguments = sys.argv[1].split(',')
     if len(arguments) != 4:

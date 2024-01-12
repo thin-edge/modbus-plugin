@@ -82,7 +82,7 @@ config_path = "/etc/tedge/plugins/modbus/devices.toml"
 logger.debug(f'Connecting to local thin-edge broker at {broker}:{port}')
 client = mqtt_client.Client(client_id)
 client.connect(broker, port)
-logger.info(f'Mtqq client with id {client_id} connected to local thin-edge broker at {broker}:{port}')
+logger.info(f'MQTT client with id {client_id} connected to local thin-edge broker at {broker}:{port}')
 try:
     #Check and store arguments
     arguments = sys.argv[1].split(',')
@@ -99,15 +99,15 @@ try:
     if modbus_type != "TCP":
         raise ValueError("Expected modbus_type to be TCP. Got " + modbus_type + ".")
 
-    #Update external id of device
-    logger.debug(f'Updating external id of device with id {deviceId}')
+    #Update external id of child device
+    logger.debug(f'Create external id for child device {deviceId}')
     url = f'http://{broker}:8001/c8y/identity/globalIds/{deviceId}/externalIds'
     tedge_id = get_tedge_id()
     data = {"externalId": f'{tedge_id}:device:{child_name}', "type": "c8y_Serial"}
     response = requests.post(url, json=data)
     if response.status_code != 201:
-        raise Exception(f'Error updating external id of device with id {deviceId}. Got response {response.status_code} from {url}. Expected 201.')
-    logger.info(f'Updated external id of device with id {deviceId} to {data["externalId"]}')
+        raise Exception(f'Error creating external id for child device with id {deviceId}. Got response {response.status_code} from {url}. Expected 201.')
+    logger.info(f'Created external id for child device with id {deviceId} to {data["externalId"]}')
 
     #Get the mapping json via rest
     url = f'http://{broker}:8001/c8y{mapping_path}'
@@ -122,8 +122,7 @@ try:
     logger.debug(f'Reading mapping toml from {config_path}')
     mapping = toml.load(config_path)
     logger.info(f'Read mapping toml from {config_path}')
-
-    
+  
 
     #Update or create device data for the device with the same childName
     logger.debug(f'Updating or creating device data for device with childName {child_name}')
