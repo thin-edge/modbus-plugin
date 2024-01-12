@@ -19,6 +19,7 @@ provides:
 depends:
   - python (>= 3.8.0) | python3 (>= 3.8.0)
   - python3-venv
+  - python3-pip
 contents:
   # pip3 requirements
 - src: ./requirements.txt
@@ -34,7 +35,7 @@ contents:
 - src: ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration.py
   dst: /etc/tedge/plugins/modbus/c8y_ModbusConfiguration.py
   file_info:
-      mode: 0555
+      mode: 0755
   #c8y_ModbusDevice
 - src: ./operations/c8y_ModbusDevice/c8y_ModbusDevice
   dst: /etc/tedge/operations/c8y/c8y_ModbusDevice
@@ -43,7 +44,7 @@ contents:
 - src: ./operations/c8y_ModbusDevice/c8y_ModbusDevice.py
   dst: /etc/tedge/plugins/modbus/c8y_ModbusDevice.py
   file_info:
-      mode: 0555
+      mode: 0755
   # Empty modbus config
 # - dst: /etc/tedge/plugins/modbus/modbus.toml
 #   type: config
