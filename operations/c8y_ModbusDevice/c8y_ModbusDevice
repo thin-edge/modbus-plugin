@@ -1,4 +1,4 @@
 [exec]
-  topic = "c8y/s/ds"
-  on_message = "xy"
-  command = "/bin/c8y_ModbusDevice.py"
+  topic = "c8y/s/dc/modbus"
+  on_message = "2"
+  command = "/etc/tedge/plugins/modbus/c8y_ModbusDevice.py"

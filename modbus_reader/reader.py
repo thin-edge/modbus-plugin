@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # coding=utf-8
 import argparse
+import json
 import logging
 import os.path
 import sched
@@ -16,7 +17,8 @@ from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
-from modbus_reader.mapper import MappedMessage, ModbusMapper
+from mapper import MappedMessage, ModbusMapper
+from smartresttemplates import SMARTREST_TEMPLATES
 
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
@@ -72,6 +74,12 @@ class ModbusPoll:
             if self.tedgeClient is not None and self.tedgeClient.is_connected():
                 self.tedgeClient.disconnect()
             self.tedgeClient = self.connect_to_thinedge()
+            #If connected to tedge, register service, update config and send smart rest template
+            time.sleep(5)
+            self.registerService()
+            self.send_smartrest_templates()
+            self.updateBaseConfigOnDevice(self.baseconfig)
+            self.updateModbusInfoOnChildDevices(self.devices)
             for evt in self.poll_scheduler.queue:
                 self.poll_scheduler.cancel(evt)
             self.polldata()
@@ -180,6 +188,8 @@ class ModbusPoll:
                             self.send_tedge_message(msg)
                     except Exception as e:
                         self.logger.error(f'Failed to map coils: {e}')
+        else:
+            self.logger.error(f'Failed to poll device {device["name"]}: {error}')
 
         self.poll_scheduler.enter(self.baseconfig['modbus']['pollinterval'], 1, self.polldevice,
                                   (device, pollmodel, mapper))
@@ -231,12 +241,21 @@ class ModbusPoll:
         return coil_results, di_result, hr_results, ir_result, error
 
     def readbasedefinition(self, basepath):
-        with open(basepath) as fileObj:
-            return tomli.loads(fileObj.read())
+        if os.path.exists(basepath):
+            with open(basepath) as fileObj:
+                return tomli.loads(fileObj.read())
+        else:
+            self.logger.error(f'Base config file {basepath} not found')
+            return {}
+ 
 
     def readdevicedefinition(self, devicepath):
-        with open(devicepath) as deviceObj:
-            return tomli.loads(deviceObj.read())
+        if os.path.exists(devicepath):
+            with open(devicepath) as deviceObj:
+                return tomli.loads(deviceObj.read())
+        else:
+            self.logger.error(f'Device config file {devicepath} not found')
+            return {}
 
     def startpolling(self):
         self.reread_config()
@@ -262,6 +281,43 @@ class ModbusPoll:
             except Exception as e:
                 self.logger.error(f'Failed to connect to thin-edge: {e}')
                 time.sleep(5)
+
+    def send_smartrest_templates(self):
+        self.logger.debug(f'Send smart rest templates to tedge broker')
+        topic = "c8y/s/ut/modbus"
+        template = '\n'.join(str(template) for template in SMARTREST_TEMPLATES)
+        
+        self.send_tedge_message(MappedMessage(template,topic))
+
+    def updateBaseConfigOnDevice(self, baseconfig):
+        self.logger.debug(f'Update base config on device')
+        topic = "te/device/main///twin/c8y_ModbusConfiguration"        
+        transmit_rate = baseconfig['modbus'].get('pollrate')
+        polling_rate = baseconfig['modbus'].get('pollinterval')        
+        config = {
+            "transmitRate": transmit_rate if transmit_rate is not None else None,
+            "pollingRate": polling_rate if polling_rate is not None else None,
+        }
+        self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+
+    def updateModbusInfoOnChildDevices(self, devices):
+        for device in devices:
+            self.logger.debug(f'Update modbus info on child device')
+            topic = f"te/device/{device['name']}///twin/c8y_ModbusDevice"
+            config = {
+                "ipAddress": device['ip'],
+                "protocol": device['port'],
+                "address": device['address'],
+                "protocol": device['protocol'],
+            }
+            self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+
+    
+    def registerService(self):
+        self.logger.debug(f'Register tedge service on device')
+        topic = "te/device/main/service/tedge-modbus-plugin"
+        data = {"@type":"service","name":"tedge-modbus-plugin","type":"service"}
+        self.send_tedge_message(MappedMessage(json.dumps(data),topic))
 
 
 def main():

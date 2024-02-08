@@ -1,12 +1,14 @@
+#!/usr/bin/python3
+# coding=utf-8
 import json
 import struct
 import sys
 from datetime import datetime, timezone
 
 topics = {
-    'measurement': 'tedge/measurements/CHILD_ID',
-    'event': 'tedge/events/TYPE/CHILD_ID',
-    'alarm': 'tedge/alarms/SEVERITY/TYPE/CHILD_ID'
+    'measurement': 'te/device/CHILD_ID///m/',
+    'event': 'te/device/CHILD_ID///e/',
+    'alarm': 'te/device/CHILD_ID///a/'
 }
 
 

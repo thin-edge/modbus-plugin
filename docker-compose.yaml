@@ -1,0 +1,24 @@
+version: "3"
+services:
+  tedge:
+    build:
+      dockerfile: images/tedge/Dockerfile
+      context: .
+    privileged: true
+    ports:
+      - "1883:1883"
+      - "8001:8001"
+  simulator:
+    build:
+      dockerfile: images/simulator/Dockerfile
+      context: .
+    privileged: true
+    ports:
+      - "8080:8080"
+      - "502:502"
+  # client:
+  #   build:
+  #     dockerfile: images/client/Dockerfile
+  #   privileged: true
+  #   ports:
+  #     - "8081:8080"

@@ -1,3 +1,13 @@
+#DEB PACKAGES
+*.deb
+
+#Test files
+/output
+log.html
+output.xml
+report.html
+interactive_console_output.xml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
