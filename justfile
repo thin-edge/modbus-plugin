@@ -17,6 +17,13 @@ venv:
   [ -d .venv ] || python3 -m venv .venv
   ./.venv/bin/pip3 install -r tests/requirements.txt
 
+# Setup Tenant for tests
+setup:
+    echo "Upload deb package to Software Repsoitory"
+    echo "Building Binary"
+    nfpm pkg --packager deb --target ./tests/data/tedge-modbus-plugin.deb
+
+
 # Run tests
 test *args='':
   ./.venv/bin/python3 -m robot.run --outputdir output {{args}} tests

@@ -165,6 +165,7 @@ To run the tests locally, you need to provide your Cumulocity credentials as env
 If you have the simulator and the tedge container running, you can run the tests with:
 
       just venv
+      just setup
       just test
 
 ## Build
