@@ -17,6 +17,15 @@ venv:
   [ -d .venv ] || python3 -m venv .venv
   ./.venv/bin/pip3 install -r tests/requirements.txt
 
+# Build deb package
+setup:
+    @mkdir -p ./tests/data
+    docker run --rm -v $PWD:/tmp -w /tmp goreleaser/nfpm package \
+    --config /tmp/nfpm.yaml \
+    --target /tmp/tests/data/tedge-modbus-plugin.deb \
+    --packager deb
+
+
 # Run tests
 test *args='':
   ./.venv/bin/python3 -m robot.run --outputdir output {{args}} tests

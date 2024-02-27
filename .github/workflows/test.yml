@@ -65,7 +65,10 @@ jobs:
         run: |
           just up -d
           just bootstrap --no-prompt
-
+      
+      - name: Setup tests
+        run: just setup
+      
       - name: Run tests
         run: just test
 

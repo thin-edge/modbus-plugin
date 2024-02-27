@@ -1,2 +1,2 @@
 robotframework~=6.0.0
-robotframework-c8y @ git+https://github.com/reubenmiller/robotframework-c8y.git@0.23.2
+robotframework-c8y @ git+https://github.com/reubenmiller/robotframework-c8y.git@0.31.3

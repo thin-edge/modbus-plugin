@@ -1,0 +1,10 @@
+[Unit]
+Description=Modbus Reader
+
+[Service]
+User=root
+Restart=on-failure
+ExecStart=/etc/tedge/plugins/modbus/venv/bin/python3 /etc/tedge/plugins/modbus/modbus_reader/reader.py -l /var/log/te-modbus-plugin/modbus.log
+
+[Install]
+WantedBy=multi-user.target

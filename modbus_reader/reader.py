@@ -76,6 +76,7 @@ class ModbusPoll:
             self.tedgeClient = self.connect_to_thinedge()
             #If connected to tedge, register service, update config and send smart rest template
             time.sleep(5)
+            self.registerChildDevices(self.devices)
             self.registerService()
             self.send_smartrest_templates()
             self.updateBaseConfigOnDevice(self.baseconfig)
@@ -319,7 +320,17 @@ class ModbusPoll:
         data = {"@type":"service","name":"tedge-modbus-plugin","type":"service"}
         self.send_tedge_message(MappedMessage(json.dumps(data),topic))
 
-
+    def registerChildDevices(self, devices):
+        for device in devices:
+            self.logger.debug(f'Child device registration for device {device["name"]}')
+            topic = f"te/device/{device['name']}//"
+            payload = {
+                    "@type": "child-device",
+                    "name": device['name'],
+                    "type": "modbus-device"
+            }
+            self.send_tedge_message(MappedMessage(json.dumps(payload),topic))
+            
 def main():
     try:
         parser = argparse.ArgumentParser()

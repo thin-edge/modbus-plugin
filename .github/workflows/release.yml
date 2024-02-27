@@ -46,6 +46,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/modbus-plugin_${{ env.VERSION }}_all.deb
-          asset_name: modbus-plugin_${{ env.VERSION }}_all.deb
+          asset_path: ./dist/tedge-modbus-plugin_${{ env.VERSION }}_all.deb
+          asset_name: tedge-modbus-plugin_${{ env.VERSION }}_all.deb
           asset_content_type: application/octet-stream
