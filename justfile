@@ -17,11 +17,13 @@ venv:
   [ -d .venv ] || python3 -m venv .venv
   ./.venv/bin/pip3 install -r tests/requirements.txt
 
-# Setup Tenant for tests
+# Build deb package
 setup:
-    echo "Upload deb package to Software Repsoitory"
-    echo "Building Binary"
-    nfpm pkg --packager deb --target ./tests/data/tedge-modbus-plugin.deb
+    @mkdir -p ./tests/data
+    docker run --rm -v $PWD:/tmp -w /tmp goreleaser/nfpm package \
+    --config /tmp/nfpm.yaml \
+    --target /tmp/tests/data/tedge-modbus-plugin.deb \
+    --packager deb
 
 
 # Run tests
