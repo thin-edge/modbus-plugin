@@ -1,9 +1,7 @@
-#!/etc/tedge/plugins/modbus/venv/bin/python3 
-# coding=utf-8
+#!/usr/bin/env python3
 import logging
 import subprocess
 import sys
-from paho.mqtt import client as mqtt_client
 import requests
 import toml
 
@@ -66,23 +64,11 @@ logging.basicConfig(filename=logFile,level=logging.DEBUG, format='%(asctime)s - 
 
 logger.info(f'New c8y_ModbusDevice operation')
 
+config_path = "/etc/tedge/plugins/modbus/devices.toml"
 
-#TODO: Get broker and port from thin-edge options
-broker = 'localhost'
-port = 1883
-client_id = "c8y_ModbusDevice-operation-client"
+# TODO: Get values from thin-edge.io directly
+broker = "127.0.0.1"
 
-config_path = "/etc/tedge/plugins/modbus/devices.toml" 
-
-# fileDir = "/etc/tedge"
-# fileName = f'{__name__}.toml'
-
-# configFile = f'{fileDir}/{fileName}'
-#Connect to local thin edge broker
-logger.debug(f'Connecting to local thin-edge broker at {broker}:{port}')
-client = mqtt_client.Client(client_id)
-client.connect(broker, port)
-logger.info(f'MQTT client with id {client_id} connected to local thin-edge broker at {broker}:{port}')
 try:
     #Check and store arguments
     arguments = sys.argv[1].split(',')
@@ -137,14 +123,5 @@ try:
     with open(config_path, "w") as tomlFile:
         tomlFile.write(tomlString)
     logger.info(f'Stored mapping toml at {config_path}')
-
-    #Set operation status to success
-    client.publish('c8y/s/us',"503,c8y_ModbusDevice")
-
-
-
 except Exception as e:
-    client.publish('c8y/s/us',f'502,c8y_ModbusDevice,"Error: {e}"')
-    logger.error(f'Error: {e}')
-
-
+    print(f'Error: {e}', file=sys.stderr)
