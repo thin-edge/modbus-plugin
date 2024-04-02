@@ -2,6 +2,9 @@ name: Build
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -11,19 +14,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get package version
+      - name: Set version
         run: |
-          export VERSION=$(grep -m 1 'version:' nfpm.yaml | awk '{print $2}' | tr -d '"')
-          echo "Extracted version: $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-      
-      - name: Create dist folder
-        run: |
-          mkdir dist
+          echo "VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+          echo "Package version: $VERSION"
 
       - name: Build with nfpm
         run: |
-          docker run --rm -v $PWD:/tmp -w /tmp goreleaser/nfpm package \
+          mkdir -p dist
+          docker run --rm -v $PWD:/tmp --env VERSION=${{ env.VERSION }} -w /tmp goreleaser/nfpm package \
             --config /tmp/nfpm.yaml \
             --target /tmp/dist \
             --packager deb
