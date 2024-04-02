@@ -6,9 +6,8 @@ WORKDIR /build
 COPY modbus_reader /build/modbus_reader
 COPY operations /build/operations
 COPY scripts /build/scripts
-COPY requirements.txt /build/requirements.txt
 COPY nfpm.yaml /build/nfpm.yaml
-COPY te-modbus-plugin.service /build/te-modbus-plugin.service
+COPY tedge-modbus-plugin.service /build/tedge-modbus-plugin.service
 # Build Package
 RUN nfpm pkg --packager deb --target /tmp/modbus-plugin_all.deb
 

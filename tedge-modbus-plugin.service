@@ -1,0 +1,10 @@
+[Unit]
+Description=Modbus Reader
+
+[Service]
+User=root
+Restart=on-failure
+ExecStart=/usr/bin/python3 -m modbus_reader -l /var/log/tedge-modbus-plugin/modbus.log
+
+[Install]
+WantedBy=multi-user.target

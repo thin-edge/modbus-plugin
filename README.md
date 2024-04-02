@@ -99,15 +99,15 @@ python script / service.
 Running the deb installer will place the config files into /etc/tedege/plugins/modbus/.
 If systemd is installed, it will run the service as part of the post-installation routine.
 
-Check the status of the systemd service with `sudo systemctl status te-modbus-plugin.service`
-When running as a service, the default log output goes to /var/log/te-modbus-plugin/modbus.log.
+Check the status of the systemd service with `sudo systemctl status tedge-modbus-plugin.service`
+When running as a service, the default log output goes to /var/log/tedge-modbus-plugin/modbus.log.
 
 ## Cumulocity Integration
 
 ### Installation via Software Management
 
 You can use the Software Repository of Cumulocity IoT and thin-edge.io Software Management plugin to install the deb remotely:
-Upload the deb package to the Cumulocity Software Repository. The name **must** be te-modbus-plugin\_ and
+Upload the deb package to the Cumulocity Software Repository. The name **must** be tedge-modbus-plugin\_ and
 the version **must** match the version in the \*.deb package name (e.g. 1.0.0). The rest of the fields can be set as necessary.
 Go to the Software tab of the target device and select the package for installation. After the operation is successful the plugin will start automatically on the device.
 
@@ -117,7 +117,7 @@ Go to the Software tab of the target device and select the package for installat
 
 For integration with the Cumulocity IoT log plugin add the following line to the /etc/tedge/c8y/c8y-log-plugin.toml
 
-    { type = "modbus", path = "/var/log/te-modbus-plugin/modbus.log" }
+    { type = "modbus", path = "/var/log/tedge-modbus-plugin/modbus.log" }
 
 ![Image](./doc/log.png)
 
@@ -196,4 +196,4 @@ After installing, you can build the Debian package with:
 
 ### As deb file
 
-Run `sudo dpkg -i te-modbus-plugin-<version>-<arch>.deb`
+Run `sudo dpkg -i tedge-modbus-plugin-<version>-<arch>.deb`

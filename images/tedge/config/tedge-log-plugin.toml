@@ -3,5 +3,5 @@ files = [
     { type = "shell", path = "/var/log/tedge/agent/c8y_Command-*" },
     { type = "dpkg", path = "/var/log/dpkg.log" },
     { type = "apt-terminal-log", path = "/var/log/apt/term.log" },
-    { type = "modbus", path = "/var/log/te-modbus-plugin/modbus.log" }
+    { type = "modbus", path = "/var/log/tedge-modbus-plugin/modbus.log" }
 ]

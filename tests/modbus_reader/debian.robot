@@ -13,7 +13,7 @@ Device should have installed software tedge-modbus-plugin
     Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}::apt
 
 Te-mobus-plugin.service should be active
-    System D Service should be Active    te-modbus-plugin
+    System D Service should be Active    tedge-modbus-plugin
 
 ReInstall Modbus Plugin
     ${deb_version}=    Get Debian Package Version    ${CURDIR}/../data/tedge-modbus-plugin.deb
@@ -35,10 +35,10 @@ ReInstall Modbus Plugin
     Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}::apt
     # Restart Plugin
     ${shell_operation}=    Execute Shell Command
-    ...    sudo systemctl restart te-modbus-plugin
+    ...    sudo systemctl restart tedge-modbus-plugin
     ${shell_operation}=    Cumulocity.Operation Should Be SUCCESSFUL    ${shell_operation}    timeout=60
     # Check if plugin is running
-    System D Service should be Active    te-modbus-plugin
+    System D Service should be Active    tedge-modbus-plugin
 
 
 *** Keywords ***
