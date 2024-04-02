@@ -17,8 +17,8 @@ from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
-from mapper import MappedMessage, ModbusMapper
-from smartresttemplates import SMARTREST_TEMPLATES
+from .mapper import MappedMessage, ModbusMapper
+from .smartresttemplates import SMARTREST_TEMPLATES
 
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
