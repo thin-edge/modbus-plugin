@@ -1,46 +1,42 @@
 *** Settings ***
 Resource        ../resources/common.robot
 Library         Cumulocity
-Library         String
 
-Suite Setup     Run Keywords    Set Main Device    Create c8y_ModbusConfiguration Operation
-
+Suite Setup     Set Main Device
 
 *** Variables ***
-${OPERATION}    ${EMPTY}
+
+${EXPECTED_TRANSMIT_RATE}    3
+${EXPECTED_POLLING_RATE}     3
 
 
 *** Test Cases ***
-c8y_ModbusConfiguration Operation should be successful
-    Cumulocity.Operation Should Be SUCCESSFUL    ${OPERATION}    timeout=60
+Set values via c8y_ModbusConfiguration Operation
+    ${operation}=    Update Modbus Settings    transmit_rate=${EXPECTED_TRANSMIT_RATE}    polling_rate=${EXPECTED_POLLING_RATE}
+    Cumulocity.Operation Should Be SUCCESSFUL    ${operation}
 
 Poll rate and transmit rate should be updated for the Device
-    ${expected_pollrate}    Set Variable    3
-    ${expected_transmitrate}    Set Variable    3
+    ${mo}=    Managed Object Should Have Fragment Values    c8y_ModbusConfiguration.pollingRate\=${EXPECTED_POLLING_RATE}    c8y_ModbusConfiguration.transmitRate\=${EXPECTED_TRANSMIT_RATE}
 
-    ${mo}    Managed Object Should Have Fragments    c8y_ModbusConfiguration
+    ${pollrate}=    Set Variable    ${mo}[c8y_ModbusConfiguration][pollingRate]
+    ${transmitrate}=    Set Variable    ${mo}[c8y_ModbusConfiguration][transmitRate]
 
-    ${pollrate}    Set Variable    ${mo}[c8y_ModbusConfiguration][pollingRate]
-    ${transmitrate}    Set Variable    ${mo}[c8y_ModbusConfiguration][transmitRate]
-
-    Should Be Equal As Numbers    ${pollrate}    ${expected_pollrate}
-    Should Be Equal As Numbers    ${transmitrate}    ${expected_transmitrate}
+    Should Be Equal As Numbers    ${pollrate}    ${EXPECTED_POLLING_RATE}
+    Should Be Equal As Numbers    ${transmitrate}    ${EXPECTED_TRANSMIT_RATE}
 
 Poll rate and transmit rate should be updated on the Device
-    ${expected_pollrate}    Set Variable    3
-    ${expected_transmitrate}    Set Variable    3
+    ${shell_operation}=    Execute Shell Command    cat /etc/tedge/plugins/modbus/modbus.toml
+    ${shell_operation}=    Cumulocity.Operation Should Be SUCCESSFUL    ${shell_operation}
 
-    ${shell_operation}    Execute Shell Command    cat /etc/tedge/plugins/modbus/modbus.toml
-    ${shell_operation}    Cumulocity.Operation Should Be SUCCESSFUL    ${shell_operation}    timeout=60
+    ${result_text}=    Set Variable    ${shell_operation}[c8y_Command][result]
 
-    ${result_text}    Set Variable    ${shell_operation}[c8y_Command][result]
-
-    Should Contain    ${result_text}    transmitinterval = 3
-    Should Contain    ${result_text}    pollinterval = 3
-
+    Should Contain    ${result_text}    transmitinterval = ${EXPECTED_TRANSMIT_RATE}
+    Should Contain    ${result_text}    pollinterval = ${EXPECTED_POLLING_RATE}
 
 *** Keywords ***
-Create c8y_ModbusConfiguration Operation
-    ${OPERATION}    Cumulocity.Create Operation
-    ...    fragments={"c8y_ModbusConfiguration": {"transmitRate": 3,"pollingRate": 3}}
-    Set Global Variable    ${OPERATION}    ${OPERATION}
+
+Update Modbus Settings
+    [Arguments]    ${transmit_rate}    ${polling_rate}
+    ${operation}=    Cumulocity.Create Operation
+    ...    fragments={"c8y_ModbusConfiguration": {"transmitRate":${transmit_rate},"pollingRate":${polling_rate}}}
+    RETURN    ${operation}
