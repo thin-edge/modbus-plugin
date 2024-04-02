@@ -347,7 +347,8 @@ def main():
     except KeyboardInterrupt:
         sys.exit(1)
     except Exception as mainerr:
-        print(f'The following error occured: {mainerr}')
+        logging.error("Unexpected error. %s", mainerr, exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
