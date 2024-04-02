@@ -11,27 +11,32 @@ on:
     branches: [ main ]
   merge_group:
 jobs:
-  test:
-    name: Test
+  approve:
+    # Note: Use approval as a job so that the downstream jobs are only prompted once (if more than 1 matrix job is defined)
+    name: Approve
     environment:
       # For security reasons, all pull requests need to be approved first before granting access to secrets
       # So the environment should be set to have a reviewer/s inspect it before approving it
       name: ${{ github.event_name == 'pull_request_target' && 'Test Pull Request' || 'Test Auto'  }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Wait for approval
+        run: echo "Approved"
+  test:
+    name: Test
+    needs: [approve]
+    environment:
+      name: Test Auto
     runs-on: ubuntu-20.04
     env:
       COMPOSE_PROJECT_NAME: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
       DEVICE_ID: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
     steps:
-      # Checkout either the PR or the branch
-      - name: Checkout PR
-        if: ${{ github.event_name == 'pull_request_target' }}
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }} # Check out the code of the PR. Only after the manual approval process
-
       - name: Checkout
-        uses: actions/checkout@v3
-        if: ${{ github.event_name != 'pull_request_target' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
+          fetch-depth: 0
 
       - name: create .env file
         run: |
@@ -42,17 +47,14 @@ jobs:
           echo 'C8Y_PASSWORD="${{ secrets.C8Y_PASSWORD }}"' >> .env
           cat .env
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           cache: 'pip'
           cache-dependency-path: |
             tests/requirements.txt
 
-      - uses: extractions/setup-just@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
+      - uses: taiki-e/install-action@just
 
       #
       # Test
@@ -73,7 +75,7 @@ jobs:
         run: just test
 
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: reports
@@ -92,16 +94,16 @@ jobs:
   generate_report:
     name: Publish report
     if: ${{ always() && github.event_name == 'pull_request_target' }}
-    needs: [test]
+    needs: [approve, test]
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Download reports
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: reports
         path: reports
     - name: Send report to commit
-      uses: joonvena/robotframework-reporter-action@v2.1
+      uses: joonvena/robotframework-reporter-action@v2.4
       with:
         gh_access_token: ${{ secrets.GITHUB_TOKEN }}
