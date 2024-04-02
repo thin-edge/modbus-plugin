@@ -264,9 +264,9 @@ class ModbusPoll:
         file_watcher_thread.start()
         self.poll_scheduler.run()
 
-    def send_tedge_message(self, msg: MappedMessage):
+    def send_tedge_message(self, msg: MappedMessage, retain: bool = False, qos: int = 0):
         self.logger.debug(f'sending message {msg.data} to topic {msg.topic}')
-        self.tedgeClient.publish(topic=msg.topic, payload=msg.data)
+        self.tedgeClient.publish(topic=msg.topic, payload=msg.data, retain=retain, qos=qos)
 
     def connect_to_thinedge(self):
         while True:
@@ -298,7 +298,7 @@ class ModbusPoll:
             "transmitRate": transmit_rate if transmit_rate is not None else None,
             "pollingRate": polling_rate if polling_rate is not None else None,
         }
-        self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+        self.send_tedge_message(MappedMessage(json.dumps(config),topic), retain=True, qos=1)
 
     def updateModbusInfoOnChildDevices(self, devices):
         for device in devices:
@@ -310,14 +310,14 @@ class ModbusPoll:
                 "address": device['address'],
                 "protocol": device['protocol'],
             }
-            self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+            self.send_tedge_message(MappedMessage(json.dumps(config),topic), retain=True, qos=1)
 
     
     def registerService(self):
         self.logger.debug(f'Register tedge service on device')
         topic = "te/device/main/service/tedge-modbus-plugin"
         data = {"@type":"service","name":"tedge-modbus-plugin","type":"service"}
-        self.send_tedge_message(MappedMessage(json.dumps(data),topic))
+        self.send_tedge_message(MappedMessage(json.dumps(data),topic), retain=True, qos=1)
 
     def registerChildDevices(self, devices):
         for device in devices:
@@ -328,7 +328,7 @@ class ModbusPoll:
                     "name": device['name'],
                     "type": "modbus-device"
             }
-            self.send_tedge_message(MappedMessage(json.dumps(payload),topic))
+            self.send_tedge_message(MappedMessage(json.dumps(payload),topic), retain=True, qos=1)
             
 def main():
     try:
