@@ -10,7 +10,7 @@ Suite Setup     Set Main Device
 Device should have installed software tedge-modbus-plugin
     ${deb_version}=    Get Debian Package Version    ${CURDIR}/../data/tedge-modbus-plugin.deb
     ${installed}=    Device Should Have Installed Software    tedge-modbus-plugin
-    Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}::apt
+    Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}
 
 Te-mobus-plugin.service should be active
     System D Service should be Active    tedge-modbus-plugin
@@ -32,7 +32,7 @@ ReInstall Modbus Plugin
     ...    {"name": "tedge-modbus-plugin", "version": "${deb_version}", "softwareType": "apt", "url": "${binary_url}"}
     Operation Should Be SUCCESSFUL    ${install_operation}    timeout=240
     ${installed}=    Device Should Have Installed Software    tedge-modbus-plugin
-    Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}::apt
+    Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}
     # Restart Plugin
     ${shell_operation}=    Execute Shell Command
     ...    sudo systemctl restart tedge-modbus-plugin
