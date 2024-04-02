@@ -1,0 +1,73 @@
+#!/bin/sh
+set -e
+
+add_smartrest_template() {
+        # Add a new Cumulocity IoT SmartRest template to the thin-edge.io settings
+        template_name="$1"
+        EXISTING_TEMPLATES=$(tedge config get c8y.smartrest.templates)
+        UPDATED_TEMPLATES=
+
+        if [ -z "$template_name" ]; then
+                echo "Invalid template name given. Template name must not be empty." >&2
+                return 1
+        fi
+
+        EXISTS=0
+        if [ -n "$EXISTING_TEMPLATES" ]; then
+                for value in $(echo "$EXISTING_TEMPLATES" | tr ',' '\n '); do
+                        if [ "$value" = "$template_name" ]; then
+                                EXISTS=1
+                                break
+                        fi
+                done
+        fi
+        
+        if [ "$EXISTS" -eq 1 ]; then
+                echo "c8y.smartrest.template has already been added. name=$template_name" >&2
+                return
+        fi
+
+        if [ -n "$EXISTING_TEMPLATES" ]; then
+                UPDATED_TEMPLATES="${EXISTING_TEMPLATES},$template_name"
+        else
+                UPDATED_TEMPLATES="$template_name"
+        fi
+
+        if [ -n "$UPDATED_TEMPLATES" ]; then
+                tedge config set c8y.smartrest.templates "$UPDATED_TEMPLATES"
+                tedge refresh-bridges
+        fi
+}
+
+add_smartrest_template modbus
+
+# Automatically added by thin-edge.io
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	# This will only remove masks created by d-s-h on package removal.
+	deb-systemd-helper unmask tedge-modbus-plugin.service >/dev/null || true
+
+	# was-enabled defaults to true, so new installations run enable.
+	if deb-systemd-helper --quiet was-enabled tedge-modbus-plugin.service; then
+		# Enables the unit on first installation, creates new
+		# symlinks on upgrades if the unit file has changed.
+		deb-systemd-helper enable tedge-modbus-plugin.service >/dev/null || true
+	else
+		# Update the statefile to add new symlinks (if any), which need to be
+		# cleaned up on purge. Also remove old symlinks.
+		deb-systemd-helper update-state tedge-modbus-plugin.service >/dev/null || true
+	fi
+fi
+# End automatically added section
+# Automatically added by thin-edge.io
+if [ "$1" = "configure" ] || [ "$1" = "abort-upgrade" ] || [ "$1" = "abort-deconfigure" ] || [ "$1" = "abort-remove" ] ; then
+	if [ -d /run/systemd/system ]; then
+		systemctl --system daemon-reload >/dev/null || true
+		if [ -n "$2" ]; then
+			_dh_action=restart
+		else
+			_dh_action=start
+		fi
+		deb-systemd-invoke $_dh_action tedge-modbus-plugin.service >/dev/null || true
+	fi
+fi
+# End automatically added section
