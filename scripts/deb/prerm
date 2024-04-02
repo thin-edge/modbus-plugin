@@ -8,7 +8,7 @@ fi
 if which pyclean3 >/dev/null 2>&1; then
     pyclean3 -p modbus_reader
 else
-    dpkg -L modbus_reader | grep \.py$ | while read -r file
+    dpkg -L tedge-modbus-plugin | grep \.py$ | while read -r file
     do
         rm -f "${file}"[co] >/dev/null
     done

@@ -17,8 +17,8 @@ license: "Apache-2.0"
 
 contents:
 #modbus reader files
-- src: ./modbus_reader
-  dst: /usr/lib/python3/dist-packages/modbus_reader/
+- src: ./modbus_reader/
+  dst: /usr/lib/python3/dist-packages/modbus_reader
 
   #c8y_ModbusConfiguration
 - src: ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration

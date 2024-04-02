@@ -22,6 +22,10 @@ ReInstall Modbus Plugin
     ...    {"name": "tedge-modbus-plugin", "version": "${deb_version}", "softwareType": "apt"}
     Operation Should Be SUCCESSFUL    ${uninstall_operation}    timeout=60
     Device Should Not Have Installed Software    tedge-modbus-plugin
+
+    ${templates}=    Get tedge smartrest config
+    Should Be Equal    ${templates}    []    msg=SmartREST Message should be removed
+
     # Upload binary
     ${binary_url}=    Cumulocity.Create Inventory Binary
     ...    tedge-modbus-plugin
@@ -40,6 +44,9 @@ ReInstall Modbus Plugin
     # Check if plugin is running
     System D Service should be Active    tedge-modbus-plugin
 
+    ${templates}=    Get tedge smartrest config
+    Should Be Equal    ${templates}    ["modbus"]    msg=SmartREST Message should be removed
+
 
 *** Keywords ***
 Get Debian Package Version
@@ -56,3 +63,9 @@ System D Service should be Active
 
     ${result_text}=    Set Variable    ${shell_operation}[c8y_Command][result]
     Should Contain    ${result_text}    active
+
+Get tedge smartrest config
+    ${shell_operation}=    Execute Shell Command
+    ...    tedge config get c8y.smartrest.templates
+    ${shell_operation}=    Cumulocity.Operation Should Be SUCCESSFUL    ${shell_operation}
+    RETURN    ${shell_operation["c8y_Command"]["result"].strip()}

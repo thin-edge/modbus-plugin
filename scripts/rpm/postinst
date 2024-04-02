@@ -4,7 +4,7 @@ set -e
 add_smartrest_template() {
         # Add a new Cumulocity IoT SmartRest template to the thin-edge.io settings
         template_name="$1"
-        EXISTING_TEMPLATES=$(tedge config get c8y.smartrest.templates)
+        EXISTING_TEMPLATES=$(tedge config get c8y.smartrest.templates | tr -d '\\[]" ')
         UPDATED_TEMPLATES=
 
         if [ -z "$template_name" ]; then
