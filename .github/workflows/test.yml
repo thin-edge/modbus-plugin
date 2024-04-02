@@ -11,24 +11,27 @@ on:
     branches: [ main ]
   merge_group:
 jobs:
-  test:
-    name: Test
+  approve:
+    # Note: Use approval as a job so that the downstream jobs are only prompted once (if more than 1 matrix job is defined)
+    name: Approve
     environment:
       # For security reasons, all pull requests need to be approved first before granting access to secrets
       # So the environment should be set to have a reviewer/s inspect it before approving it
       name: ${{ github.event_name == 'pull_request_target' && 'Test Pull Request' || 'Test Auto'  }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Wait for approval
+        run: echo "Approved"
+  test:
+    name: Test
+    needs: [approve]
+    environment:
+      name: Test Auto
     runs-on: ubuntu-20.04
     env:
       COMPOSE_PROJECT_NAME: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
       DEVICE_ID: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
     steps:
-      # Checkout either the PR or the branch
-      - name: Checkout PR
-        if: ${{ github.event_name == 'pull_request_target' }}
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }} # Check out the code of the PR. Only after the manual approval process
-
       - name: Checkout
         uses: actions/checkout@v3
         if: ${{ github.event_name != 'pull_request_target' }}
@@ -92,7 +95,7 @@ jobs:
   generate_report:
     name: Publish report
     if: ${{ always() && github.event_name == 'pull_request_target' }}
-    needs: [test]
+    needs: [approve, test]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
