@@ -2,6 +2,9 @@ name: Build
 
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -11,41 +14,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get package version
+      - name: Set version
         run: |
-          export VERSION=$(grep -m 1 'version:' nfpm.yaml | awk '{print $2}' | tr -d '"')
-          echo "Extracted version: $VERSION"
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-      
-      - name: Create dist folder
-        run: |
-          mkdir dist
+          echo "VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+          echo "Package version: $VERSION"
 
       - name: Build with nfpm
         run: |
-          docker run --rm -v $PWD:/tmp -w /tmp goreleaser/nfpm package \
+          mkdir -p dist
+          docker run --rm -v $PWD:/tmp --env VERSION=${{ env.VERSION }} -w /tmp goreleaser/nfpm package \
             --config /tmp/nfpm.yaml \
             --target /tmp/dist \
             --packager deb
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
+          generate_release_notes: true
           draft: true
           prerelease: false
-
-      - name: Upload Release Asset Frontend
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/tedge-modbus-plugin_${{ env.VERSION }}_all.deb
-          asset_name: tedge-modbus-plugin_${{ env.VERSION }}_all.deb
-          asset_content_type: application/octet-stream
+          files:
+            ./dist/tedge-modbus-plugin_*_all.deb

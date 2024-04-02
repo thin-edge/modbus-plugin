@@ -5,17 +5,13 @@
 name: "tedge-modbus-plugin"
 arch: "all"
 platform: "linux"
-version: "0.0.1"
+version: ${VERSION}
 section: "default"
 priority: "extra"
 maintainer: techforum.softwareag.com
 description: "Modbus plugin for the thin-edge.io"
 homepage: "https://github.com/thin-edge/modbus-plugin"
 license: "Apache-2.0"
-replaces:
-#- modbus-plugin
-provides:
-#- modbus-plugin
 depends:
   - python (>= 3.8.0) | python3 (>= 3.8.0)
   - python3-venv
