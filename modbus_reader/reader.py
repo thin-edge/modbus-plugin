@@ -9,7 +9,7 @@ import sys
 import threading
 import time
 
-import pyfiglet
+from .banner import BANNER
 import tomli
 from paho.mqtt import client as mqtt_client
 from pymodbus.client.tcp import ModbusTcpClient
@@ -98,9 +98,9 @@ class ModbusPoll:
             self.logger.error('File observer failed')
 
     def print_banner(self):
-        self.logger.info(pyfiglet.figlet_format("Modbus plugin for thin-edge.io"))
-        self.logger.info("Author:\t\tRina,Mario,Murat")
-        self.logger.info("Date:\t\t12th October 2022")
+        self.logger.info(BANNER)
+        self.logger.info("Author:    Rina,Mario,Murat")
+        self.logger.info("Date:      12th October 2022")
         self.logger.info(
             "Description:\tA service that extracts data from a Modbus Server and sends it to a local thin-edge.io broker.")
         self.logger.info("Documentation:\tPlease refer to the c8y-documentation wiki to find service description")
