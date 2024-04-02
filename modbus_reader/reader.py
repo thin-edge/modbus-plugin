@@ -291,12 +291,12 @@ class ModbusPoll:
 
     def updateBaseConfigOnDevice(self, baseconfig):
         self.logger.debug(f'Update base config on device')
-        topic = "te/device/main///twin/c8y_ModbusConfiguration"        
-        transmit_rate = baseconfig['modbus'].get('pollrate')
-        polling_rate = baseconfig['modbus'].get('pollinterval')        
+        topic = "te/device/main///twin/c8y_ModbusConfiguration"
+        transmit_rate = baseconfig['modbus'].get('transmitinterval')
+        polling_rate = baseconfig['modbus'].get('pollinterval')
         config = {
-            "transmitRate": transmit_rate if transmit_rate is not None else None,
-            "pollingRate": polling_rate if polling_rate is not None else None,
+            "transmitRate": transmit_rate,
+            "pollingRate": polling_rate,
         }
         self.send_tedge_message(MappedMessage(json.dumps(config),topic), retain=True, qos=1)
 
