@@ -12,7 +12,7 @@ Device should have installed software tedge-modbus-plugin
     ${installed}=    Device Should Have Installed Software    tedge-modbus-plugin
     Should Be Equal    ${installed["tedge-modbus-plugin"]["version"]}    ${deb_version}
 
-Te-mobus-plugin.service should be active
+Service should be active
     System D Service should be Active    tedge-modbus-plugin
 
 ReInstall Modbus Plugin
