@@ -2,7 +2,7 @@
 #
 # check https://nfpm.goreleaser.com/configuration for detailed usage
 #
-name: "modbus-plugin"
+name: "tedge-modbus-plugin"
 arch: "all"
 platform: "linux"
 version: "0.0.1"
@@ -51,6 +51,12 @@ contents:
 #   # Empty device config
 # - dst: /etc/tedge/plugins/modbus/devices.toml
 #   type: config
+# System D Unit File
+- src: ./te-modbus-plugin.service
+  dst: /lib/systemd/system/te-modbus-plugin.service
+  file_info:
+      mode: 0644
+      owner: root
 
   # Logfile folder
 - dst: /var/log/te-modbus-plugin
