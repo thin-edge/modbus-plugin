@@ -12,10 +12,6 @@ maintainer: techforum.softwareag.com
 description: "Modbus plugin for the thin-edge.io"
 homepage: "https://github.com/thin-edge/modbus-plugin"
 license: "Apache-2.0"
-replaces:
-#- modbus-plugin
-provides:
-#- modbus-plugin
 depends:
   - python (>= 3.8.0) | python3 (>= 3.8.0)
   - python3-venv
