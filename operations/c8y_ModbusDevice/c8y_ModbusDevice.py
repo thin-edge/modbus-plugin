@@ -20,8 +20,8 @@ def get_tedge_id():
         device_id = result.stdout.strip()
 
         return device_id
-    except subprocess.CalledProcessError as e:
-        raise e
+    except subprocess.CalledProcessError as proc_err:
+        raise proc_err
 
 
 def update_or_create_device_mapping(
@@ -42,10 +42,10 @@ def update_or_create_device_mapping(
 
 
 def get_device_from_mapping(
-    childName, modbus_address, modbus_server, modbus_type, mapping
+    child_name, modbus_address, modbus_server, modbus_type, mapping
 ):
     device = {}
-    device["name"] = childName
+    device["name"] = child_name
     device["address"] = int(modbus_address)
     device["ip"] = modbus_server
     device["port"] = 502
@@ -55,43 +55,42 @@ def get_device_from_mapping(
     # Registers
     device["registers"] = [{}] * len(mapping["c8y_Registers"])
 
-    for i, c8yRegister in enumerate(mapping["c8y_Registers"]):
-        device["registers"][i]["number"] = c8yRegister["number"]
-        device["registers"][i]["startbit"] = c8yRegister["startBit"]
-        device["registers"][i]["nobits"] = c8yRegister["noBits"]
-        device["registers"][i]["signed"] = c8yRegister["signed"]
-        device["registers"][i]["multiplier"] = c8yRegister["multiplier"]
-        device["registers"][i]["divisor"] = c8yRegister["divisor"]
-        device["registers"][i]["decimalshiftright"] = c8yRegister["offset"]
-        device["registers"][i]["input"] = c8yRegister["input"]
+    for i, c8y_register in enumerate(mapping["c8y_Registers"]):
+        device["registers"][i]["number"] = c8y_register["number"]
+        device["registers"][i]["startbit"] = c8y_register["startBit"]
+        device["registers"][i]["nobits"] = c8y_register["noBits"]
+        device["registers"][i]["signed"] = c8y_register["signed"]
+        device["registers"][i]["multiplier"] = c8y_register["multiplier"]
+        device["registers"][i]["divisor"] = c8y_register["divisor"]
+        device["registers"][i]["decimalshiftright"] = c8y_register["offset"]
+        device["registers"][i]["input"] = c8y_register["input"]
         # Measurements
-        if "measurementMapping" in c8yRegister:
+        if "measurementMapping" in c8y_register:
             # device["registers"][i]['measurementmapping'] = {}
-            measurementmapping = {}
-            meas_type = c8yRegister["measurementMapping"]["type"]
-            meas_series = c8yRegister["measurementMapping"]["series"]
-            measurementmapping[
+            measurement_mapping = {}
+            meas_type = c8y_register["measurementMapping"]["type"]
+            meas_series = c8y_register["measurementMapping"]["series"]
+            measurement_mapping[
                 "templatestring"
             ] = f'{{"{meas_type}":{{"{meas_series}":%%}}}}'
-            device["registers"][i]["measurementmapping"] = measurementmapping
+            device["registers"][i]["measurementmapping"] = measurement_mapping
 
     return device
 
 
 logger = logging.getLogger("c8y_ModbusDevice")
-logFile = "/var/log/tedge/c8y_ModbusDevice.log"
 logging.basicConfig(
-    filename=logFile,
+    filename="/var/log/tedge/c8y_ModbusDevice.log",
     level=logging.DEBUG,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger.info("New c8y_ModbusDevice operation")
 
-config_path = "/etc/tedge/plugins/modbus/devices.toml"
+CONFIG_PATH = "/etc/tedge/plugins/modbus/devices.toml"
 
 # TODO: Get values from thin-edge.io directly
-broker = "127.0.0.1"
+BROKER = "127.0.0.1"
 
 try:
     # Check and store arguments
@@ -115,7 +114,7 @@ try:
 
     # Update external id of child device
     logger.debug("Create external id for child device %s", deviceId)
-    url = f"http://{broker}:8001/c8y/identity/globalIds/{deviceId}/externalIds"
+    url = f"http://{BROKER}:8001/c8y/identity/globalIds/{deviceId}/externalIds"
     tedge_id = get_tedge_id()
     data = {"externalId": f"{tedge_id}:device:{child_name}", "type": "c8y_Serial"}
     response = requests.post(url, json=data, timeout=60)
@@ -131,7 +130,7 @@ try:
     )
 
     # Get the mapping json via rest
-    url = f"http://{broker}:8001/c8y{mapping_path}"
+    url = f"http://{BROKER}:8001/c8y{mapping_path}"
     logger.debug("Getting mapping json from %s", url)
     response = requests.get(url, timeout=60)
     logger.info("Got mapping json from %s with response %d", url, response.status_code)
@@ -143,9 +142,9 @@ try:
     new_mapping = response.json()
 
     # Read the mapping toml from pathToConfig
-    logger.debug("Reading mapping toml from %s", config_path)
-    mapping = toml.load(config_path)
-    logger.info("Read mapping toml from %s", config_path)
+    logger.debug("Reading mapping toml from %s", CONFIG_PATH)
+    mapping = toml.load(CONFIG_PATH)
+    logger.info("Read mapping toml from %s", CONFIG_PATH)
 
     # Update or create device data for the device with the same childName
     logger.debug(
@@ -158,12 +157,12 @@ try:
     logger.debug("Created mapping toml: %s", mapping)
 
     # Store the mapping toml:
-    logger.debug("Storing mapping toml at %s", config_path)
+    logger.debug("Storing mapping toml at %s", CONFIG_PATH)
 
     tomlString = toml.dumps(mapping)
-    with open(config_path, "w", encoding="utf8") as tomlFile:
+    with open(CONFIG_PATH, "w", encoding="utf8") as tomlFile:
         tomlFile.write(tomlString)
-    logger.info("Stored mapping toml at %s", config_path)
+    logger.info("Stored mapping toml at %s", CONFIG_PATH)
 except Exception as e:
     print("Error: %s", e, file=sys.stderr)
     sys.exit(1)

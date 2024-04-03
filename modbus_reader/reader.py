@@ -19,9 +19,9 @@ from .banner import BANNER
 from .mapper import MappedMessage, ModbusMapper
 from .smartresttemplates import SMARTREST_TEMPLATES
 
-defaultFileDir = "/etc/tedge/plugins/modbus"
-baseConfigName = "modbus.toml"
-devicesConfigName = "devices.toml"
+DEFAULT_FILE_DIR = "/etc/tedge/plugins/modbus"
+BASE_CONFIG_NAME = "modbus.toml"
+DEVICES_CONFIG_NAME = "devices.toml"
 
 
 class ModbusPoll:
@@ -36,18 +36,18 @@ class ModbusPoll:
                 return
             if isinstance(event, FileModifiedEvent) and event.event_type == "modified":
                 filename = os.path.basename(event.src_path)
-                if filename in [baseConfigName, devicesConfigName]:
+                if filename in [BASE_CONFIG_NAME, DEVICES_CONFIG_NAME]:
                     self.poller.reread_config()
 
     logger: logging.Logger
-    tedgeClient: mqtt_client.Client = None
+    tedge_client: mqtt_client.Client = None
     poll_scheduler = sched.scheduler(time.time, time.sleep)
-    baseconfig = {}
+    base_config = {}
     devices = []
-    configdir = "."
+    config_dir = "."
 
-    def __init__(self, configdir=".", logfile=None):
-        self.configdir = configdir
+    def __init__(self, config_dir=".", logfile=None):
+        self.config_dir = config_dir
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
         if logfile is not None:
@@ -62,40 +62,40 @@ class ModbusPoll:
 
     def reread_config(self):
         self.logger.info("file change detected, reading files")
-        newbaseconfig = self.readbasedefinition(f"{self.configdir}/{baseConfigName}")
-        restartrequired = False
-        if len(newbaseconfig) > 1 and newbaseconfig != self.baseconfig:
-            restartrequired = True
-            self.baseconfig = newbaseconfig
-        newdevices = self.readdevicedefinition(f"{self.configdir}/{devicesConfigName}")
+        new_base_config = self.read_base_definition(f"{self.config_dir}/{BASE_CONFIG_NAME}")
+        restart_required = False
+        if len(new_base_config) > 1 and new_base_config != self.base_config:
+            restart_required = True
+            self.base_config = new_base_config
+        new_devices = self.read_device_definition(f"{self.config_dir}/{DEVICES_CONFIG_NAME}")
         if (
-            len(newdevices) >= 1
-            and newdevices.get("device")
-            and newdevices.get("device") is not None
-            and newdevices.get("device") != self.devices
+            len(new_devices) >= 1
+            and new_devices.get("device")
+            and new_devices.get("device") is not None
+            and new_devices.get("device") != self.devices
         ):
-            restartrequired = True
-            self.devices = newdevices["device"]
-        if restartrequired:
+            restart_required = True
+            self.devices = new_devices["device"]
+        if restart_required:
             self.logger.info("config change detected, restart polling")
-            if self.tedgeClient is not None and self.tedgeClient.is_connected():
-                self.tedgeClient.disconnect()
-            self.tedgeClient = self.connect_to_thinedge()
+            if self.tedge_client is not None and self.tedge_client.is_connected():
+                self.tedge_client.disconnect()
+            self.tedge_client = self.connect_to_thinedge()
             # If connected to tedge, register service, update config and send smart rest template
             time.sleep(5)
-            self.registerChildDevices(self.devices)
-            self.registerService()
+            self.register_child_devices(self.devices)
+            self.register_service()
             self.send_smartrest_templates()
-            self.updateBaseConfigOnDevice(self.baseconfig)
-            self.updateModbusInfoOnChildDevices(self.devices)
+            self.update_base_config_on_device(self.base_config)
+            self.update_modbus_info_on_child_devices(self.devices)
             for evt in self.poll_scheduler.queue:
                 self.poll_scheduler.cancel(evt)
-            self.polldata()
+            self.poll_data()
 
-    def watchConfigFiles(self, configDir):
+    def watch_config_files(self, config_dir):
         event_handler = self.ConfigFileChangedHandler(self)
         observer = Observer()
-        observer.schedule(event_handler, configDir)
+        observer.schedule(event_handler, config_dir)
         observer.start()
         try:
             while True:
@@ -117,11 +117,11 @@ class ModbusPoll:
             "Documentation: Please refer to the c8y-documentation wiki to find service description"
         )
 
-    def polldata(self):
+    def poll_data(self):
         for device in self.devices:
             mapper = ModbusMapper(device)
             poll_model = self.build_query_model(device)
-            self.polldevice(device, poll_model, mapper)
+            self.poll_device(device, poll_model, mapper)
 
     def split_set(self, s):
         partitions = []
@@ -141,39 +141,39 @@ class ModbusPoll:
         holding_registers = set()
         input_register = set()
         coils = set()
-        discret_input = set()
+        discrete_input = set()
         if device.get("registers") is not None:
-            for registerDefiniton in device["registers"]:
-                registernumber = registerDefiniton["number"]
-                numregisters = int(
-                    (registerDefiniton["startbit"] + registerDefiniton["nobits"] - 1)
+            for register_definition in device["registers"]:
+                register_number = register_definition["number"]
+                num_registers = int(
+                    (register_definition["startbit"] + register_definition["nobits"] - 1)
                     / 16
                 )
-                registerend = registernumber + numregisters
-                registers = list(range(registernumber, registerend + 1))
-                if registerDefiniton.get("input") is True:
+                register_end = register_number + num_registers
+                registers = list(range(register_number, register_end + 1))
+                if register_definition.get("input") is True:
                     input_register.update(registers)
                 else:
                     holding_registers.update(registers)
         if device.get("coils") is not None:
-            for coildefinition in device["coils"]:
-                coilnumber = coildefinition["number"]
-                if coildefinition.get("input") is True:
-                    discret_input.add(coilnumber)
+            for coil_definition in device["coils"]:
+                coil_number = coil_definition["number"]
+                if coil_definition.get("input") is True:
+                    discrete_input.add(coil_number)
                 else:
-                    coils.add(coilnumber)
+                    coils.add(coil_number)
 
         return (
             self.split_set(holding_registers),
             self.split_set(input_register),
             self.split_set(coils),
-            self.split_set(discret_input),
+            self.split_set(discrete_input),
         )
 
     def read_register(self, buf, address=0, count=1):
         return [buf[i] for i in range(address, address + count)]
 
-    def polldevice(self, device, pollmodel, mapper):
+    def poll_device(self, device, poll_model, mapper):
         self.logger.debug("Polling device %s", device["name"])
         (
             coil_results,
@@ -181,33 +181,33 @@ class ModbusPoll:
             hr_results,
             ir_result,
             error,
-        ) = self.get_data_from_device(device, pollmodel)
+        ) = self.get_data_from_device(device, poll_model)
         if error is None:
             # handle all Registers
             if device.get("registers") is not None:
-                for registerDefiniton in device["registers"]:
+                for register_definition in device["registers"]:
                     try:
-                        registernumber = registerDefiniton["number"]
-                        numregisters = (
+                        register_number = register_definition["number"]
+                        num_registers = (
                             int(
                                 (
-                                    registerDefiniton["startbit"]
-                                    + registerDefiniton["nobits"]
+                                    register_definition["startbit"]
+                                    + register_definition["nobits"]
                                     - 1
                                 )
                                 / 16
                             )
                             + 1
                         )
-                        if registerDefiniton.get("input"):
+                        if register_definition.get("input"):
                             result = self.read_register(
-                                ir_result, address=registernumber, count=numregisters
+                                ir_result, address=register_number, count=num_registers
                             )
                         else:
                             result = self.read_register(
-                                hr_results, address=registernumber, count=numregisters
+                                hr_results, address=register_number, count=num_registers
                             )
-                        msgs = mapper.mapregister(result, registerDefiniton)
+                        msgs = mapper.map_register(result, register_definition)
                         for msg in msgs:
                             self.send_tedge_message(msg)
                     except Exception as e:
@@ -215,18 +215,18 @@ class ModbusPoll:
 
             # all Coils
             if device.get("coils") is not None:
-                for coildefinition in device["coils"]:
+                for coil_def in device["coils"]:
                     try:
-                        coilnumber = coildefinition["number"]
-                        if coildefinition.get("input") is True:
+                        coil_number = coil_def["number"]
+                        if coil_def.get("input") is True:
                             result = self.read_register(
-                                di_result, address=coilnumber, count=1
+                                di_result, address=coil_number, count=1
                             )
                         else:
                             result = self.read_register(
-                                coil_results, address=coilnumber, count=1
+                                coil_results, address=coil_number, count=1
                             )
-                        msgs = mapper.mapcoil(result, coildefinition)
+                        msgs = mapper.map_coil(result, coil_def)
                         for msg in msgs:
                             self.send_tedge_message(msg)
                     except Exception as e:
@@ -235,10 +235,10 @@ class ModbusPoll:
             self.logger.error("Failed to poll device %s: %s", device["name"], error)
 
         self.poll_scheduler.enter(
-            self.baseconfig["modbus"]["pollinterval"],
+            self.base_config["modbus"]["pollinterval"],
             1,
-            self.polldevice,
-            (device, pollmodel, mapper),
+            self.poll_device,
+            (device, poll_model, mapper),
         )
 
     def get_data_from_device(self, device, pollmodel):
@@ -305,7 +305,7 @@ class ModbusPoll:
         client.close()
         return coil_results, di_result, hr_results, ir_result, error
 
-    def readbasedefinition(self, basepath):
+    def read_base_definition(self, basepath):
         if os.path.exists(basepath):
             with open(basepath, encoding="utf8") as file:
                 return tomli.load(file)
@@ -313,7 +313,7 @@ class ModbusPoll:
             self.logger.error("Base config file %s not found", basepath)
             return {}
 
-    def readdevicedefinition(self, devicepath):
+    def read_device_definition(self, devicepath):
         if os.path.exists(devicepath):
             with open(devicepath, encoding="utf8") as file:
                 return tomli.load(file)
@@ -321,10 +321,10 @@ class ModbusPoll:
             self.logger.error("Device config file %s not found", devicepath)
             return {}
 
-    def startpolling(self):
+    def start_polling(self):
         self.reread_config()
         file_watcher_thread = threading.Thread(
-            target=self.watchConfigFiles, args=[self.configdir]
+            target=self.watch_config_files, args=[self.config_dir]
         )
         file_watcher_thread.daemon = True
         file_watcher_thread.start()
@@ -334,15 +334,15 @@ class ModbusPoll:
         self, msg: MappedMessage, retain: bool = False, qos: int = 0
     ):
         self.logger.debug("sending message %s to topic %s", msg.data, msg.topic)
-        self.tedgeClient.publish(
+        self.tedge_client.publish(
             topic=msg.topic, payload=msg.data, retain=retain, qos=qos
         )
 
     def connect_to_thinedge(self):
         while True:
             try:
-                broker = self.baseconfig["thinedge"]["mqtthost"]
-                port = self.baseconfig["thinedge"]["mqttport"]
+                broker = self.base_config["thinedge"]["mqtthost"]
+                port = self.base_config["thinedge"]["mqttport"]
                 client_id = "modbus-client"
                 client = mqtt_client.Client(client_id)
                 client.connect(broker, port)
@@ -358,7 +358,7 @@ class ModbusPoll:
         template = "\n".join(str(template) for template in SMARTREST_TEMPLATES)
         self.send_tedge_message(MappedMessage(template, topic))
 
-    def updateBaseConfigOnDevice(self, baseconfig):
+    def update_base_config_on_device(self, baseconfig):
         self.logger.debug("Update base config on device")
         topic = "te/device/main///twin/c8y_ModbusConfiguration"
         transmit_rate = baseconfig["modbus"].get("transmitinterval")
@@ -371,7 +371,7 @@ class ModbusPoll:
             MappedMessage(json.dumps(config), topic), retain=True, qos=1
         )
 
-    def updateModbusInfoOnChildDevices(self, devices):
+    def update_modbus_info_on_child_devices(self, devices):
         for device in devices:
             self.logger.debug("Update modbus info on child device")
             topic = f"te/device/{device['name']}///twin/c8y_ModbusDevice"
@@ -385,7 +385,7 @@ class ModbusPoll:
                 MappedMessage(json.dumps(config), topic), retain=True, qos=1
             )
 
-    def registerService(self):
+    def register_service(self):
         self.logger.debug("Register tedge service on device")
         topic = "te/device/main/service/tedge-modbus-plugin"
         data = {"@type": "service", "name": "tedge-modbus-plugin", "type": "service"}
@@ -393,7 +393,7 @@ class ModbusPoll:
             MappedMessage(json.dumps(data), topic), retain=True, qos=1
         )
 
-    def registerChildDevices(self, devices):
+    def register_child_devices(self, devices):
         for device in devices:
             self.logger.debug("Child device registration for device %s", device["name"])
             topic = f"te/device/{device['name']}//"
@@ -421,8 +421,8 @@ def main():
             configdir = os.path.abspath(args.configdir)
         else:
             configdir = None
-        poll = ModbusPoll(configdir or defaultFileDir, args.logfile)
-        poll.startpolling()
+        poll = ModbusPoll(configdir or DEFAULT_FILE_DIR, args.logfile)
+        poll.start_polling()
     except KeyboardInterrupt:
         sys.exit(1)
     except Exception as mainerr:

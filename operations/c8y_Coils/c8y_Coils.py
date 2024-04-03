@@ -8,7 +8,7 @@ try:
     fileDir.mkdir(parents=True, exist_ok=True)
 
     array = sys.argv[1].split(",")
-    with open(configFile, mode="w", newline="") as file:
+    with open(configFile, mode="w", newline="", encoding="utf8") as file:
         file.write(array)
 except Exception as e:
     print(f"Error: {e}", file=sys.stderr)

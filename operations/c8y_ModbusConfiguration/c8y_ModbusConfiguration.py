@@ -12,10 +12,10 @@ logging.basicConfig(
 logger.info("New c8y_ModbusConfiguration operation")
 
 # TODO: Get broker and port from thin-edge options
-broker = "localhost"
-port = 1883
-client_id = "c8y_ModbusConfiguration-operation-client"
-config_path = "/etc/tedge/plugins/modbus/modbus.toml"
+BROKER = "localhost"
+PORT = 1883
+CLIENT_ID = "c8y_ModbusConfiguration-operation-client"
+CONFIG_PATH = "/etc/tedge/plugins/modbus/modbus.toml"
 
 try:
     arguments = sys.argv[1].split(",")
@@ -29,8 +29,8 @@ try:
     logger.debug("transmitRate: %d, pollingRate: %d", transmit_rate, polling_rate)
 
     # Get device configuration
-    logger.info("Read mapping toml from %s", config_path)
-    modbus_config = toml.load(config_path)
+    logger.info("Read mapping toml from %s", CONFIG_PATH)
+    modbus_config = toml.load(CONFIG_PATH)
     logger.debug("Current configuration: %s", modbus_config)
 
     # Update configuration
@@ -38,10 +38,10 @@ try:
     modbus_config["modbus"]["pollinterval"] = polling_rate
 
     # Save to file
-    logger.info("Saving new configuration to %s", config_path)
-    with open(config_path, "w", encoding="utf8") as f:
+    logger.info("Saving new configuration to %s", CONFIG_PATH)
+    with open(CONFIG_PATH, "w", encoding="utf8") as f:
         toml.dump(modbus_config, f)
-    logger.info("New configuration saved to %s", config_path)
+    logger.info("New configuration saved to %s", CONFIG_PATH)
 
     # Update managedObject
     logger.debug("Updating managedObject with new configuration")
@@ -55,9 +55,9 @@ try:
         payload=json.dumps(config),
         qos=1,
         retain=True,
-        hostname=broker,
-        port=port,
-        client_id=client_id,
+        hostname=BROKER,
+        port=PORT,
+        client_id=CLIENT_ID,
     )
 
 except Exception as e:
