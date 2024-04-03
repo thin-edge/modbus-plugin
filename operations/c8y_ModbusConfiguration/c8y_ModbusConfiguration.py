@@ -51,3 +51,4 @@ try:
 
 except Exception as e:
     logger.error("Error: %s", e)
+    sys.exit(1)
