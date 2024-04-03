@@ -15,7 +15,16 @@ down-all:
 # Install python virtual environment
 venv:
   [ -d .venv ] || python3 -m venv .venv
-  ./.venv/bin/pip3 install -r tests/requirements.txt
+  ./.venv/bin/pip3 install -r tests/requirements.txt -r requirements.txt -r requirements.dev.txt
+
+# Format python code
+format:
+    .venv/bin/python3 -m black .
+
+# Run python linter
+lint:
+    .venv/bin/python3 -m pylint operations
+    .venv/bin/python3 -m pylint modbus_reader
 
 # Build deb package
 setup:

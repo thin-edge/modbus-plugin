@@ -197,3 +197,24 @@ After installing, you can build the Debian package with:
 ### As deb file
 
 Run `sudo dpkg -i tedge-modbus-plugin-<version>-<arch>.deb`
+
+
+## Contributing
+
+### Coding Style
+
+The python project uses both black and pylint to enforce a specific coding style.
+
+Before you submit a PR you should run the following commands, otherwise your PR will not be merged:
+
+1. Format all of the python code
+
+    ```sh
+    just format
+    ```
+
+2. Check python linting
+
+    ```sh
+    just lint
+    ```
