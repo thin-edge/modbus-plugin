@@ -71,7 +71,7 @@ There are two configuration files you need to edit for your use case. Any change
 All config files are expected to be in the /etc/tedge/plugins/modbus folder.
 As an alternative the directory can be based with -c or --configdir to the python script like so:
 
-`python modbus_reader/reader.py --configdir <configfolder>`
+`python3 -m tedge_modbus.reader --configdir <configfolder>`
 
 If used with Cumulocity IoT, the plugins can be managed via the Device Management or created with the cloud fieldbus operations.
 
@@ -192,7 +192,7 @@ After installing, you can build the Debian package with:
 - create the virtualenv with `python -m venv venv`
 - activate venv environment with `source ./venv/bin/activate`
 - install all dependencies with `python -m pip install -r requirements.txt`
-- run the reader with `python modbus_reader/reader.py -c ./config`
+- run the reader with `python tedge_modbus/reader/reader.py -c ./config`
 
 ### As deb file
 

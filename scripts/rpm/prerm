@@ -9,7 +9,7 @@ fi
 
 # Remove (logic is normally added by dh_python3 helper)
 if which pyclean3 >/dev/null 2>&1; then
-    pyclean3 -p modbus_reader
+    pyclean3 -p tedge_modbus
 else
     dpkg -L tedge-modbus-plugin | grep \.py$ | while read -r file
     do

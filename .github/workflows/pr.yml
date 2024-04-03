@@ -36,4 +36,4 @@ jobs:
         run: pylint operations
 
       - name: Check reader
-        run: pylint modbus_reader
+        run: pylint tedge_modbus

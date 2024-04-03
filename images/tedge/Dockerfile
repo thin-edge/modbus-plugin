@@ -3,7 +3,7 @@ FROM goreleaser/nfpm as build-stage
 
 # Copy required files
 WORKDIR /build
-COPY modbus_reader /build/modbus_reader
+COPY tedge_modbus /build/tedge_modbus
 COPY operations /build/operations
 COPY scripts /build/scripts
 COPY nfpm.yaml /build/nfpm.yaml
