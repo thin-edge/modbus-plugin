@@ -1,0 +1,4 @@
+[exec]
+  topic = "c8y/s/ds"
+  on_message = "xy"
+  command = "python3 -m tedge_modbus.operations c8y_Registers"
