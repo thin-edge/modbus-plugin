@@ -1,5 +1,4 @@
-#!/usr/bin/python3
-# coding=utf-8
+#!/usr/bin/env python3
 import argparse
 import json
 import logging
@@ -9,7 +8,7 @@ import sys
 import threading
 import time
 
-import pyfiglet
+from .banner import BANNER
 import tomli
 from paho.mqtt import client as mqtt_client
 from pymodbus.client.tcp import ModbusTcpClient
@@ -17,8 +16,8 @@ from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
-from mapper import MappedMessage, ModbusMapper
-from smartresttemplates import SMARTREST_TEMPLATES
+from .mapper import MappedMessage, ModbusMapper
+from .smartresttemplates import SMARTREST_TEMPLATES
 
 defaultFileDir = "/etc/tedge/plugins/modbus"
 baseConfigName = 'modbus.toml'
@@ -98,9 +97,9 @@ class ModbusPoll:
             self.logger.error('File observer failed')
 
     def print_banner(self):
-        self.logger.info(pyfiglet.figlet_format("Modbus plugin for thin-edge.io"))
-        self.logger.info("Author:\t\tRina,Mario,Murat")
-        self.logger.info("Date:\t\t12th October 2022")
+        self.logger.info(BANNER)
+        self.logger.info("Author:    Rina,Mario,Murat")
+        self.logger.info("Date:      12th October 2022")
         self.logger.info(
             "Description:\tA service that extracts data from a Modbus Server and sends it to a local thin-edge.io broker.")
         self.logger.info("Documentation:\tPlease refer to the c8y-documentation wiki to find service description")
@@ -265,9 +264,9 @@ class ModbusPoll:
         file_watcher_thread.start()
         self.poll_scheduler.run()
 
-    def send_tedge_message(self, msg: MappedMessage):
+    def send_tedge_message(self, msg: MappedMessage, retain: bool = False, qos: int = 0):
         self.logger.debug(f'sending message {msg.data} to topic {msg.topic}')
-        self.tedgeClient.publish(topic=msg.topic, payload=msg.data)
+        self.tedgeClient.publish(topic=msg.topic, payload=msg.data, retain=retain, qos=qos)
 
     def connect_to_thinedge(self):
         while True:
@@ -292,14 +291,14 @@ class ModbusPoll:
 
     def updateBaseConfigOnDevice(self, baseconfig):
         self.logger.debug(f'Update base config on device')
-        topic = "te/device/main///twin/c8y_ModbusConfiguration"        
-        transmit_rate = baseconfig['modbus'].get('pollrate')
-        polling_rate = baseconfig['modbus'].get('pollinterval')        
+        topic = "te/device/main///twin/c8y_ModbusConfiguration"
+        transmit_rate = baseconfig['modbus'].get('transmitinterval')
+        polling_rate = baseconfig['modbus'].get('pollinterval')
         config = {
-            "transmitRate": transmit_rate if transmit_rate is not None else None,
-            "pollingRate": polling_rate if polling_rate is not None else None,
+            "transmitRate": transmit_rate,
+            "pollingRate": polling_rate,
         }
-        self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+        self.send_tedge_message(MappedMessage(json.dumps(config),topic), retain=True, qos=1)
 
     def updateModbusInfoOnChildDevices(self, devices):
         for device in devices:
@@ -311,14 +310,14 @@ class ModbusPoll:
                 "address": device['address'],
                 "protocol": device['protocol'],
             }
-            self.send_tedge_message(MappedMessage(json.dumps(config),topic))
+            self.send_tedge_message(MappedMessage(json.dumps(config),topic), retain=True, qos=1)
 
     
     def registerService(self):
         self.logger.debug(f'Register tedge service on device')
         topic = "te/device/main/service/tedge-modbus-plugin"
         data = {"@type":"service","name":"tedge-modbus-plugin","type":"service"}
-        self.send_tedge_message(MappedMessage(json.dumps(data),topic))
+        self.send_tedge_message(MappedMessage(json.dumps(data),topic), retain=True, qos=1)
 
     def registerChildDevices(self, devices):
         for device in devices:
@@ -329,7 +328,7 @@ class ModbusPoll:
                     "name": device['name'],
                     "type": "modbus-device"
             }
-            self.send_tedge_message(MappedMessage(json.dumps(payload),topic))
+            self.send_tedge_message(MappedMessage(json.dumps(payload),topic), retain=True, qos=1)
             
 def main():
     try:
@@ -347,7 +346,8 @@ def main():
     except KeyboardInterrupt:
         sys.exit(1)
     except Exception as mainerr:
-        print(f'The following error occured: {mainerr}')
+        logging.error("Unexpected error. %s", mainerr, exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

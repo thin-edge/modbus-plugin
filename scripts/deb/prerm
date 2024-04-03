@@ -1,0 +1,15 @@
+#!/bin/sh
+set -e
+if [ -d /run/systemd/system ] && [ "$1" = remove ]; then
+	deb-systemd-invoke stop tedge-modbus-plugin.service >/dev/null || true
+fi
+
+# Remove (logic is normally added by dh_python3 helper)
+if which pyclean3 >/dev/null 2>&1; then
+    pyclean3 -p modbus_reader
+else
+    dpkg -L tedge-modbus-plugin | grep \.py$ | while read -r file
+    do
+        rm -f "${file}"[co] >/dev/null
+    done
+fi

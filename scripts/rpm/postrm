@@ -1,0 +1,56 @@
+#!/bin/sh
+set -e
+# Automatically added by thin-edge.io
+if [ -d /run/systemd/system ]; then
+	systemctl --system daemon-reload >/dev/null || true
+fi
+# End automatically added section
+# Automatically added by thin-edge.io
+if [ $1 -ge 1 ] && [ -x "/usr/lib/systemd/systemd-update-helper" ]; then
+    # Package upgrade, not uninstall
+    /usr/lib/systemd/systemd-update-helper mark-restart-system-units tedge-modbus-plugin.service || :
+fi
+
+# End automatically added section
+
+remove_smartrest_template() {
+        # Add a new Cumulocity IoT SmartRest template to the thin-edge.io settings
+        template_name="$1"
+        EXISTING_TEMPLATES=$(tedge config get c8y.smartrest.templates | tr -d '\\[]" ')
+        UPDATED_TEMPLATES=
+
+        if [ -z "$template_name" ]; then
+                echo "Invalid template name given. Template name must not be empty." >&2
+                return 1
+        fi
+
+        UPDATE_TEMPLATES=
+        if [ -n "$EXISTING_TEMPLATES" ]; then
+                for value in $(echo "$EXISTING_TEMPLATES" | tr ',' '\n '); do
+                        if [ "$value" != "$template_name" ]; then
+                                if [ -n "$UPDATE_TEMPLATES" ]; then
+                                    UPDATE_TEMPLATES="${UPDATE_TEMPLATES},${value}"
+                                else
+                                    UPDATE_TEMPLATES="${value}"
+                                fi
+                        fi
+                done
+        fi
+
+        if [ "$UPDATE_TEMPLATES" = "$EXISTING_TEMPLATES" ]; then
+            echo "c8y.smartrest.template does not contain the template. name=$template_name" >&2
+            return
+        fi
+    
+        echo "Removing c8y.smartrest.template. name=$template_name" >&2
+        if [ -n "$UPDATED_TEMPLATES" ]; then
+            tedge config set c8y.smartrest.templates "$UPDATED_TEMPLATES"
+        else
+            tedge config unset c8y.smartrest.templates
+        fi
+        tedge refresh-bridges
+}
+
+if [ "$1" = "0" ]; then
+    remove_smartrest_template modbus
+fi

@@ -1,7 +1,6 @@
 paho-mqtt~=1.6.1
 pymodbus==3.0.2
 watchdog~=2.1.9
-pyfiglet~=0.8.post1
 pyModbusTCP
 pyserial-asyncio
 tomli~=2.0.1

@@ -6,13 +6,12 @@ WORKDIR /build
 COPY modbus_reader /build/modbus_reader
 COPY operations /build/operations
 COPY scripts /build/scripts
-COPY requirements.txt /build/requirements.txt
 COPY nfpm.yaml /build/nfpm.yaml
-COPY te-modbus-plugin.service /build/te-modbus-plugin.service
+COPY tedge-modbus-plugin.service /build/tedge-modbus-plugin.service
 # Build Package
 RUN nfpm pkg --packager deb --target /tmp/modbus-plugin_all.deb
 
-FROM ghcr.io/thin-edge/tedge-demo-main-systemd:20231105.1
+FROM ghcr.io/thin-edge/tedge-demo-main-systemd:20240319.1412
 # Install Modbus Plugin
 COPY --from=build-stage /tmp/modbus-plugin_all.deb /tmp/modbus-plugin_all.deb
 RUN apt-get update \
