@@ -1,4 +1,0 @@
-[exec]
-  topic = "c8y/s/ds"
-  on_message = "xy"
-  command = "/bin/c8y_Registers.py"
