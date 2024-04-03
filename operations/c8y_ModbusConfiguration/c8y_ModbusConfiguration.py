@@ -47,7 +47,7 @@ try:
             "transmitRate": transmit_rate,
             "pollingRate": polling_rate,
     }
-    mqtt_publish(topic="te/device/main///twin/c8y_ModbusConfiguration", payload=json.dumps(config), qos=1, retained=True, hostname=broker, port=port, client_id=client_id)
+    mqtt_publish(topic="te/device/main///twin/c8y_ModbusConfiguration", payload=json.dumps(config), qos=1, retain=True, hostname=broker, port=port, client_id=client_id)
 
 except Exception as e:
     logger.error("Error: %s", e)
