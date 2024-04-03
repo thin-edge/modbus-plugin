@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Cumulocity IoT ModbusConfiguration operation handler
+"""
 import json
 import logging
 import sys

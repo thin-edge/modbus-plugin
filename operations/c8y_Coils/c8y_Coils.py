@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+"""Cumulocity IoT c8y_Coils operation handler
+"""
 import sys
 from pathlib import Path
 

@@ -13,18 +13,17 @@ topics = {
 }
 
 
-
 @dataclass
 class MappedMessage:
-    """Mapped message
-    """
+    """Mapped message"""
+
     data: str = ""
     topic: str = ""
 
 
 class ModbusMapper:
-    """Modbus mapper
-    """
+    """Modbus mapper"""
+
     device = None
 
     # store data to be able to compare them later
@@ -34,21 +33,19 @@ class ModbusMapper:
         self.device = device
 
     def validate(self, register_def):
-        """Validate definition
-        """
+        """Validate definition"""
         start_bit = register_def["startbit"]
         field_len = register_def["nobits"]
         if field_len > 64:
-            raise Exception(
+            raise ValueError(
                 f"definition of field length too long ({field_len}) "
                 f'for register {register_def["number"]} at {start_bit}'
             )
         if register_def.get("datatype") == "float" and field_len not in (16, 32, 64):
-            raise Exception("float values must have a length of 16, 32 or 64")
+            raise ValueError("float values must have a length of 16, 32 or 64")
 
     def parse_int(self, buffer, signed, mask):
-        """parse value to an integer
-        """
+        """parse value to an integer"""
         field_len = mask.bit_length()
         is_negative = buffer >> (field_len - 1) & 0x01
         if signed and is_negative:
@@ -58,14 +55,15 @@ class ModbusMapper:
         return value
 
     def parse_float(self, buffer, field_len):
-        """parse value to a float
-        """
+        """parse value to a float"""
         formats = {16: "e", 32: "f", 64: "d"}
         return struct.unpack(
             formats[field_len], buffer.to_bytes(int(field_len / 8), sys.byteorder)
         )[0]
 
     def map_register(self, read_register, register_def):
+        """Map register"""
+        # pylint: disable=too-many-locals
         messages = []
         start_bit = register_def["startbit"]
         field_len = register_def["nobits"]
@@ -126,34 +124,42 @@ class ModbusMapper:
         self.data[register_type][register_key] = value
         return messages
 
-    def map_coil(self, bits, coildefinition):
+    def map_coil(self, bits, coil_definition):
+        """Map coil"""
         messages = []
-        registertype = "di" if coildefinition.get("input") else "co"
-        registerkey = coildefinition["number"]
+        register_type = "di" if coil_definition.get("input") else "co"
+        register_key = coil_definition["number"]
         value = 1 if bits[0] else 0
-        if coildefinition.get("alarmmapping") is not None:
+        if coil_definition.get("alarmmapping") is not None:
             messages.extend(
                 self.check_alarm(
-                    value, coildefinition.get("alarmmapping"), registertype, registerkey
+                    value,
+                    coil_definition.get("alarmmapping"),
+                    register_type,
+                    register_key,
                 )
             )
-        if coildefinition.get("eventmapping") is not None:
+        if coil_definition.get("eventmapping") is not None:
             messages.extend(
                 self.check_event(
-                    value, coildefinition.get("eventmapping"), registertype, registerkey
+                    value,
+                    coil_definition.get("eventmapping"),
+                    register_type,
+                    register_key,
                 )
             )
-        self.data[registertype][registerkey] = value
+        self.data[register_type][register_key] = value
         return messages
 
-    def check_alarm(self, value, alarmmapping, registertype, registerkey):
+    def check_alarm(self, value, alarm_mapping, register_type, register_key):
+        """Check alarm"""
         messages = []
-        old_data = self.data.get(registertype).get(registerkey)
+        old_data = self.data.get(register_type).get(register_key)
         # raise alarm if bit is 1
         if (old_data is None or old_data == 0) and value > 0:
-            severity = alarmmapping["severity"].lower()
-            alarm_type = alarmmapping["type"]
-            text = alarmmapping["text"]
+            severity = alarm_mapping["severity"].lower()
+            alarm_type = alarm_mapping["type"]
+            text = alarm_mapping["text"]
             topic = topics["alarm"]
             topic = topic.replace("CHILD_ID", self.device.get("name"))
             topic = topic.replace("SEVERITY", severity)
@@ -162,13 +168,14 @@ class ModbusMapper:
             messages.append(MappedMessage(json.dumps(data), topic))
         return messages
 
-    def check_event(self, value, eventmapping, registertype, registerkey):
+    def check_event(self, value, event_mapping, register_type, register_key):
+        """Check event"""
         messages = []
-        old_data = self.data.get(registertype).get(registerkey)
+        old_data = self.data.get(register_type).get(register_key)
         # raise event if value changed
         if old_data is None or old_data != value:
-            eventtype = eventmapping["type"]
-            text = eventmapping["text"]
+            eventtype = event_mapping["type"]
+            text = event_mapping["text"]
             topic = topics["event"]
             topic = topic.replace("CHILD_ID", self.device.get("name"))
             topic = topic.replace("TYPE", eventtype)
@@ -178,13 +185,18 @@ class ModbusMapper:
 
     @staticmethod
     def buffer_register(register: list, little_endian, is_little_word_endian):
+        """Buffer register"""
         buf = 0x00
 
         if is_little_word_endian:
             for reg in reversed(register):
-                buf = (buf << 16) | reg if not little_endian else (reg >> 8) | (reg << 8)
+                buf = (
+                    (buf << 16) | reg if not little_endian else (reg >> 8) | (reg << 8)
+                )
         else:
             for reg in register:
-                buf = (buf << 16) | reg if not little_endian else (reg >> 8) | (reg << 8)
+                buf = (
+                    (buf << 16) | reg if not little_endian else (reg >> 8) | (reg << 8)
+                )
 
         return buf

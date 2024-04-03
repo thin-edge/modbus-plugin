@@ -1,5 +1,6 @@
 """Cumulocity IoT SmartREST template definitions
 """
+
 # pylint: disable=line-too-long
 SMARTREST_TEMPLATES = [
     "11,1,,c8y_ModbusConfiguration,c8y_ModbusConfiguration.transmitRate,c8y_ModbusConfiguration.pollingRate",
