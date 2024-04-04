@@ -2,6 +2,7 @@
 """Cumulocity IoT Modbus device operation handler
 """
 import logging
+from dataclasses import dataclass
 import requests
 import toml
 
@@ -15,34 +16,36 @@ logging.basicConfig(
 )
 
 
-def update_or_create_device_mapping(
-    mapping, child_name, modbus_address, modbus_server, modbus_type, new_mapping
-):
+@dataclass
+class ModebusDevice:
+    """Modbus device details"""
+
+    modbus_type: str
+    modbus_address: str
+    child_name: str
+    modbus_server: str
+    device_id: str
+    mapping_path: str
+
+
+def update_or_create_device_mapping(target: ModebusDevice, mapping, new_mapping):
     """Update or create device mapping"""
     devices = mapping.setdefault("device", [])
     for i, device in enumerate(devices):
-        if device.get("name") == child_name:
-            devices[i] = get_device_from_mapping(
-                child_name, modbus_address, modbus_server, modbus_type, new_mapping
-            )
+        if device.get("name") == target.child_name:
+            devices[i] = get_device_from_mapping(target, new_mapping)
             return
-    devices.append(
-        get_device_from_mapping(
-            child_name, modbus_address, modbus_server, modbus_type, new_mapping
-        )
-    )
+    devices.append(get_device_from_mapping(target, new_mapping))
 
 
-def get_device_from_mapping(
-    child_name, modbus_address, modbus_server, modbus_type, mapping
-):
+def get_device_from_mapping(target: ModebusDevice, mapping):
     """Get a device from a given mapping definition"""
     device = {}
-    device["name"] = child_name
-    device["address"] = int(modbus_address)
-    device["ip"] = modbus_server
+    device["name"] = target.child_name
+    device["address"] = int(target.modbus_address)
+    device["ip"] = target.modbus_server
     device["port"] = 502
-    device["protocol"] = modbus_type
+    device["protocol"] = target.modbus_type
     device["littlewordendian"] = True
 
     # Registers
@@ -71,6 +74,18 @@ def get_device_from_mapping(
     return device
 
 
+def parse_arguments(arguments) -> ModebusDevice:
+    """Parse operation arguments"""
+    return ModebusDevice(
+        modbus_type=arguments[2],  # Only works for TCP.
+        modbus_address=arguments[3],
+        child_name=arguments[4],
+        modbus_server=arguments[5],
+        device_id=arguments[6],
+        mapping_path=arguments[7],
+    )
+
+
 def run(arguments, context: Context):
     """main"""
     logger.info("New c8y_ModbusDevice operation")
@@ -82,44 +97,41 @@ def run(arguments, context: Context):
             + "."
         )
     config_path = context.config_dir / "devices.toml"
-    modbus_type = arguments[2]  # Only works for TCP.
-    modbus_address = arguments[3]
-    child_name = arguments[4]
-    modbus_server = arguments[5]
-    device_id = arguments[6]
-    mapping_path = arguments[7]
+    target = parse_arguments(arguments)
 
     # Fail if modbus_type is not TCP
-    if modbus_type != "TCP":
-        raise ValueError("Expected modbus_type to be TCP. Got " + modbus_type + ".")
+    if target.modbus_type != "TCP":
+        raise ValueError(
+            "Expected modbus_type to be TCP. Got " + target.modbus_type + "."
+        )
 
     # Update external id of child device
-    logger.debug("Create external id for child device %s", device_id)
-    url = f"{context.c8y_proxy}/identity/globalIds/{device_id}/externalIds"
+    logger.debug("Create external id for child device %s", target.device_id)
+    url = f"{context.c8y_proxy}/identity/globalIds/{target.device_id}/externalIds"
     data = {
-        "externalId": f"{context.device_id}:device:{child_name}",
+        "externalId": f"{context.device_id}:device:{target.child_name}",
         "type": "c8y_Serial",
     }
     response = requests.post(url, json=data, timeout=60)
     if response.status_code != 201:
         raise ValueError(
-            f"Error creating external id for child device with id {device_id}. "
+            f"Error creating external id for child device with id {target.device_id}. "
             f"Got response {response.status_code} from {url}. Expected 201."
         )
     logger.info(
         "Created external id for child device with id %s to %s",
-        device_id,
+        target.device_id,
         data["externalId"],
     )
 
     # Get the mapping json via rest
-    url = f"{context.c8y_proxy}{mapping_path}"
+    url = f"{context.c8y_proxy}{target.mapping_path}"
     logger.debug("Getting mapping json from %s", url)
     response = requests.get(url, timeout=60)
     logger.info("Got mapping json from %s with response %d", url, response.status_code)
     if response.status_code != 200:
         raise ValueError(
-            f"Error getting mapping at {mapping_path}. "
+            f"Error getting mapping at {target.mapping_path}. "
             f"Got response {response.status_code} from {url}. Expected 200."
         )
     new_mapping = response.json()
@@ -131,10 +143,13 @@ def run(arguments, context: Context):
 
     # Update or create device data for the device with the same childName
     logger.debug(
-        "Updating or creating device data for device with childName %s", child_name
+        "Updating or creating device data for device with childName %s",
+        target.child_name,
     )
     update_or_create_device_mapping(
-        mapping, child_name, modbus_address, modbus_server, modbus_type, new_mapping
+        target,
+        mapping,
+        new_mapping,
     )
 
     logger.debug("Created mapping toml: %s", mapping)
