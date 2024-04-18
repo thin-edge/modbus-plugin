@@ -196,7 +196,7 @@ class ModbusPoll:
     def poll_device(self, device, poll_model, mapper):
         """Poll a Modbus device"""
         # TODO: Can this be simplified / split to smaller portions?
-        # pylint: disable=too-many-branches
+        # pylint: disable=too-many-branches,too-many-locals
         self.logger.debug("Polling device %s", device["name"])
         (
             coil_results,
@@ -266,6 +266,7 @@ class ModbusPoll:
 
     def get_data_from_device(self, device, poll_model):
         """Get Modbus information from the device"""
+        # pylint: disable=too-many-locals
         client = ModbusTcpClient(
             host=device["ip"],
             port=device["port"],

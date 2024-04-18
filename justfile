@@ -24,7 +24,7 @@ format:
 # Run python linter
 lint:
     .venv/bin/python3 -m pylint operations
-    .venv/bin/python3 -m pylint modbus_reader
+    .venv/bin/python3 -m pylint tedge_modbus
 
 # Build deb package
 setup:

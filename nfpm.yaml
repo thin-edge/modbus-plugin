@@ -17,34 +17,22 @@ license: "Apache-2.0"
 
 contents:
 #modbus reader files
-- src: ./modbus_reader/
-  dst: /usr/lib/python3/dist-packages/modbus_reader
+- src: ./tedge_modbus/
+  dst: /usr/lib/python3/dist-packages/tedge_modbus
 
-  #c8y_ModbusConfiguration
-- src: ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration
-  dst: /etc/tedge/operations/c8y/c8y_ModbusConfiguration
+# operation handlers
+- src: ./operations/*
+  dst: /etc/tedge/operations/c8y/
   file_info:
-      mode: 0644
-- src: ./operations/c8y_ModbusConfiguration/c8y_ModbusConfiguration.py
-  dst: /etc/tedge/plugins/modbus/c8y_ModbusConfiguration.py
-  file_info:
-      mode: 0755
+    mode: 0644
 
-# c8y_ModbusDevice
-- src: ./operations/c8y_ModbusDevice/c8y_ModbusDevice
-  dst: /etc/tedge/operations/c8y/c8y_ModbusDevice
-  file_info:
-      mode: 0644
-- src: ./operations/c8y_ModbusDevice/c8y_ModbusDevice.py
-  dst: /etc/tedge/plugins/modbus/c8y_ModbusDevice.py
-  file_info:
-      mode: 0755
-  # Empty modbus config
+# Empty modbus config
 # - dst: /etc/tedge/plugins/modbus/modbus.toml
 #   type: config
 #   # Empty device config
 # - dst: /etc/tedge/plugins/modbus/devices.toml
 #   type: config
+
 # System D Unit File
 - src: ./tedge-modbus-plugin.service
   dst: /lib/systemd/system/tedge-modbus-plugin.service
