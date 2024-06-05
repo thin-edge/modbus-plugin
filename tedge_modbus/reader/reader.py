@@ -374,7 +374,9 @@ class ModbusPoll:
                 broker = self.base_config["thinedge"]["mqtthost"]
                 port = self.base_config["thinedge"]["mqttport"]
                 client_id = "modbus-client"
-                client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1,client_id)
+                client = mqtt_client.Client(
+                    mqtt_client.CallbackAPIVersion.VERSION1, client_id
+                )
                 client.connect(broker, port)
                 self.logger.debug("Connected to MQTTT broker at %s:%d", broker, port)
                 return client
