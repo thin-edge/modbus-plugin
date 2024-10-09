@@ -1,7 +1,7 @@
-# modbus-plugin
+# tedge-modbus-plugin
 
-Thin-edge.io modbus community plugin.
-Plugin for polling Modbus devices and publishing the data to thin-edge.io. If used with Cumulocity IoT, the plugin can be managed via software configuration management. The Plugin also supports some of the [cloud fieldbus](https://cumulocity.com/guides/protocol-integration/cloud-fieldbus/) operations to set the modbus mapping via Cumulocity IoT UI.
+thin-edge.io Modbus community plugin.
+Plugin for polling Modbus devices and publishing the data to thin-edge.io. If used with Cumulocity IoT, the plugin can be managed via software configuration management. The Plugin also supports some of the [Cloud Fieldbus](https://cumulocity.com/guides/protocol-integration/cloud-fieldbus/) operations to set the Modbus mapping via Cumulocity IoT UI.
 
 ## Table of contents
 
@@ -29,37 +29,43 @@ Plugin for polling Modbus devices and publishing the data to thin-edge.io. If us
 
 ## Overview
 
-The plugin regularly polls Modbus devices and publishes the data to the thin-edge.io broker. The plugin is based on the [pymodbus](https://pymodbus.readthedocs.io/en/latest/) library. After installing, the plugin can be configured by changing the modbus.toml and devices.toml files. The plugin comes with an example config [4] with comments to get you started. Adding multiple servers should also be as simple as adding additional [[device]] sections for each IP address you want to poll.
+The plugin regularly polls Modbus devices and publishes the data to the thin-edge.io broker. The plugin is based on the [pymodbus](https://pymodbus.readthedocs.io/en/latest/) library. After installing, the plugin can be configured by changing the `modbus.toml` and `devices.toml` files. The plugin comes with an example config [4] with comments to get you started. Adding multiple servers should also be as simple as adding additional `[[device]]` sections for each IP address you want to poll.
 
 ## Requirements
 
 - Ubuntu >= 22.04 or Debian >= 11.0
 - Python >= 3.8
 - systemd
-- for operations support: thin-edge.io >= 0.13.0
+- for operations support: thin-edge.io >= 1.x
 - for demo purposes: docker-compose
 
 ## Demo
 
-You can run the thin-edge.io with the plugin and a modbus simulator locally via Docker containers. To start the demo, run 'just up' in the root folder of the repository. This will start the tedge container and the modbus simulator.
-The modbus simulator runs a modbus server with some example registers. The simulator is based on the [pymodbus](https://pymodbus.readthedocs.io/en/latest/) library and can be found and changed in the [images/simulator](./images/simulator/) folder.
+You can run the thin-edge.io with the plugin and a Modbus simulator locally via Docker containers. To start the demo, run 'just up' in the root folder of the repository. This will start the tedge container and the Modbus simulator.
+The Modbus simulator runs a Modbus server with some example registers. The simulator is based on the [pymodbus](https://pymodbus.readthedocs.io/en/latest/) library and can be found and changed in the [images/simulator](./images/simulator/) folder.
 
-The demo includes a example device that maps an integer and float register to a Child Device. The device config can be found in the [images/tedge/config](./images/tedge/config) folder.
+The demo includes a example device that maps an integer and float register to a child device. The device configuration can be found in the [images/tedge/config](./images/tedge/config) folder.
 
 To start the containers, you need to have docker-compose installed. You can start the containers with:
 
-    just up
+```sh
+just up
+```
 
 After starting the containers, you need to register the thin-edge.io on your tenant. You can do this by running the following command:
 
-    just bootstrap
+```sh
+just bootstrap
+```
 
 This will create a device certificate in the tedge container and upload it to your tenant. To skip the manual input of your credentials, you create a .env file in your working directory:
 
-    C8Y_BASEURL=https://<tenant>.cumulocity.com
-    C8Y_USER=<user>
-    C8Y_PASSWORD=<password>
-    DEVICE_ID=<External ID of your Test Device>
+```sh
+C8Y_BASEURL=https://<tenant>.cumulocity.com
+C8Y_USER=<user>
+C8Y_PASSWORD=<password>
+DEVICE_ID=<External ID of your Test Device>
+```
 
 You can skip the manual bootstrap process by running:
 
@@ -73,11 +79,11 @@ As an alternative the directory can be based with -c or --configdir to the pytho
 
 `python3 -m tedge_modbus.reader --configdir <configfolder>`
 
-If used with Cumulocity IoT, the plugins can be managed via the Device Management or created with the cloud fieldbus operations.
+If used with Cumulocity IoT, the plugins can be managed via the Device Management or created with the Cloud Fieldbus operations.
 
 ### modbus.toml
 
-This includes the basic configuration for the plugin such as poll rate and the connection to thin-edge (the MQTT broker needs to match the one of tedge and is probably the default localhost:1883).
+This includes the basic configuration for the plugin such as poll rate and the connection to thin-edge (the MQTT broker needs to match the one of tedge and is probably the default `localhost:1883`).
 
 - poll rate
 - connection to thin-edge (MQTT broker needs to match the one of tedge)
@@ -86,7 +92,7 @@ This includes the basic configuration for the plugin such as poll rate and the c
 
 This file includes the information for the connection(s) to the Modbus server(s) and how the Modbus Registers and Coils map to thin-edge’s Measurements, Events and Alarms.
 
-The device config can be managed via Cumulocity IoT or created with the cloud fieldbus operations.
+The device config can be managed via Cumulocity IoT or created with the Cloud Fieldbus operations.
 
 ### Updating the config files
 
@@ -96,18 +102,18 @@ python script / service.
 
 ## Logs and systemd service
 
-Running the deb installer will place the config files into /etc/tedege/plugins/modbus/.
-If systemd is installed, it will run the service as part of the post-installation routine.
+Running the deb installer will place the config files into `/etc/tedege/plugins/modbus/`.
+If systemd is installed, it will enable and start the service as part of the post-installation routine.
 
 Check the status of the systemd service with `sudo systemctl status tedge-modbus-plugin.service`
-When running as a service, the default log output goes to /var/log/tedge-modbus-plugin/modbus.log.
+When running as a service, the default log output goes to `/var/log/tedge-modbus-plugin/modbus.log`.
 
 ## Cumulocity Integration
 
 ### Installation via Software Management
 
 You can use the Software Repository of Cumulocity IoT and thin-edge.io Software Management plugin to install the deb remotely:
-Upload the deb package to the Cumulocity Software Repository. The name **must** be tedge-modbus-plugin\_ and
+Upload the deb package to the Cumulocity Software Repository. The name **must** be `tedge-modbus-plugin` and
 the version **must** match the version in the \*.deb package name (e.g. 1.0.0). The rest of the fields can be set as necessary.
 Go to the Software tab of the target device and select the package for installation. After the operation is successful the plugin will start automatically on the device.
 
@@ -115,30 +121,34 @@ Go to the Software tab of the target device and select the package for installat
 
 ### Log file access
 
-For integration with the Cumulocity IoT log plugin add the following line to the /etc/tedge/c8y/c8y-log-plugin.toml
+For integration with the Cumulocity IoT log plugin add the following line to the /etc/tedge/plugins/tedge-log-plugin.toml
 
-    { type = "modbus", path = "/var/log/tedge-modbus-plugin/modbus.log" }
+```toml
+{ type = "modbus", path = "/var/log/tedge-modbus-plugin/modbus.log" }
+```
 
 ![Image](./doc/log.png)
 
 ### Config management
 
 Both config files can either be updated in-place (i.e. simply editing with an editor) or
-by using the c8y-configuration plugin. Add the following lines to the c8y-configuration-plugin.toml
+by using thin-edge.io. Add the following lines to the `tedge-configuration-plugin.toml`
 to be able to access them from the Cumulocity Configuration UI:
 
-    {path = '/etc/tedge/plugins/modbus/modbus.toml', type='modbus'},
-    {path = '/etc/tedge/plugins/modbus/devices.toml', type='modbus-devices'}
+```toml
+{ path = '/etc/tedge/plugins/modbus/modbus.toml', type='modbus' },
+{ path = '/etc/tedge/plugins/modbus/devices.toml', type='modbus-devices' }
+```
 
 To replace the files with a version from the Cumulocity Configuration Repository you have to download a copy,
 edit it and upload it to the repository. The device type **must** be set to _thin-edge.io_ and the config type must match
-the definition in your c8y-configuration-plugin.toml. I.e either _modbus_ (for modbus.toml) or _modbus-devices_ for (devices.toml)
+the definition in your tedge-configuration-plugin.toml. I.e either _modbus_ (for modbus.toml) or _modbus-devices_ for (devices.toml)
 
 ![Image](./doc/cm.png)
 
 ### Cloud Fieldbus
 
-The plugin supports the [cloud fieldbus](https://cumulocity.com/guides/protocol-integration/cloud-fieldbus/) operations to set the modbus mapping via Cumulocity IoT UI.
+The plugin supports the [Cloud Fieldbus](https://cumulocity.com/guides/protocol-integration/cloud-fieldbus/) operations to set the Modbus mapping via Cumulocity IoT UI.
 As of now, the plugin only supports the following operations:
 
 - c8y_ModbusDevice
@@ -149,7 +159,7 @@ The configuration of your protocol depends on your Modbus Server. If you are usi
 
 ![Image](./doc/protocol.png)
 
-After creating the protocol, you can add a new Cloud Fieldbus Device. Select the Modubs Tab on your thin-edge.io and add a new tcp device. If you are using the Modbus Demo simulator, you need to add the IP-Address of your Docker host, as Hostnames are not supported by the UI.
+After creating the protocol, you can add a new Cloud Fieldbus Device. Select the Modbus Tab on your thin-edge.io and add a new tcp device. If you are using the Modbus Demo simulator, you need to add the IP-Address of your Docker host, as host names are not supported by the UI.
 
 ![Image](./doc/tcp_device.png)
 
@@ -157,21 +167,25 @@ After creating the protocol, you can add a new Cloud Fieldbus Device. Select the
 
 To run the tests locally, you need to provide your Cumulocity credentials as environment variables in a .env file:
 
-    C8Y_BASEURL=https://<tenant>.cumulocity.com
-    C8Y_USER=<user>
-    C8Y_PASSWORD=<password>
-    DEVICE_ID=<External ID of your Test Device>
+```sh
+C8Y_BASEURL=https://<tenant>.cumulocity.com
+C8Y_USER=<user>
+C8Y_PASSWORD=<password>
+DEVICE_ID=<External ID of your Test Device>
+```
 
 If you have the simulator and the tedge container running, you can run the tests with:
 
-      just venv
-      just setup
-      just test
+```sh
+just venv
+just setup
+just test
+```
 
 ## Build
 
 A package of the plugin, including the Modbus polling service and the Cloud Fieldbus operations, can be build with nfpm. To build the packages locally, make sure to install nfpm first.
-The package requires a python3 installation on your device. The postinstallation script will create a virtualenv and install all dependencies. The virtualenv will be located in /etc/tedge/plugins/modbus The service will be started automatically after installation.
+The package requires a python3 installation on your device.
 
 To create the packages, you need to install nfpm first:
 
@@ -181,7 +195,9 @@ To create the packages, you need to install nfpm first:
 
 After installing, you can build the Debian package with:
 
-     nfpm pkg --packager deb --target /tmp/
+```
+nfpm pkg --packager deb --target /tmp/
+```
 
 ## Deployment
 
@@ -189,15 +205,18 @@ After installing, you can build the Debian package with:
 
 - copy modbus-plugin folder to target device
 - ssh into device and go to the plugin folder
-- create the virtualenv with `python -m venv venv`
-- activate venv environment with `source ./venv/bin/activate`
-- install all dependencies with `python -m pip install -r requirements.txt`
-- run the reader with `python tedge_modbus/reader/reader.py -c ./config`
+- create the virtual environment with `python3 -m venv venv`
+- activate the virtual environment with `source ./venv/bin/activate`
+- install all dependencies with `python3 -m pip install -r requirements.txt`
+- run the reader with `python3 tedge_modbus/reader/reader.py -c ./config`
 
 ### As deb file
 
-Run `sudo dpkg -i tedge-modbus-plugin-<version>-<arch>.deb`
+Install the debian package using the following command:
 
+```sh
+sudo dpkg -i tedge-modbus-plugin-<version>-<arch>.deb
+```
 
 ## Contributing
 
