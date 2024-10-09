@@ -124,7 +124,7 @@ Go to the Software tab of the target device and select the package for installat
 For integration with the Cumulocity IoT log plugin add the following line to the /etc/tedge/plugins/tedge-log-plugin.toml
 
 ```toml
-{ type = "modbus", path = "/var/log/tedge-modbus-plugin/modbus.log" }
+{ type = "modbus", path = "/var/log/tedge-modbus-plugin/modbus.log" },
 ```
 
 ![Image](./doc/log.png)
@@ -136,8 +136,8 @@ by using thin-edge.io. Add the following lines to the `tedge-configuration-plugi
 to be able to access them from the Cumulocity Configuration UI:
 
 ```toml
-{ path = '/etc/tedge/plugins/modbus/modbus.toml', type='modbus' },
-{ path = '/etc/tedge/plugins/modbus/devices.toml', type='modbus-devices' }
+{ path = '/etc/tedge/plugins/modbus/modbus.toml', type='modbus', owner='tedge', group='tedge', mode=0o644 },
+{ path = '/etc/tedge/plugins/modbus/devices.toml', type='modbus-devices', owner='tedge', group='tedge', mode=0o644 },
 ```
 
 To replace the files with a version from the Cumulocity Configuration Repository you have to download a copy,
