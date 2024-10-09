@@ -16,7 +16,7 @@ homepage: "https://github.com/thin-edge/modbus-plugin"
 license: "Apache-2.0"
 
 contents:
-#modbus reader files
+# Modbus reader files
 - src: ./tedge_modbus/
   dst: /usr/lib/python3/dist-packages/tedge_modbus
 
@@ -26,7 +26,7 @@ contents:
   file_info:
     mode: 0644
 
-# Example modbus config
+# Example Modbus config
 - src: config/modbus.toml
   dst: /etc/tedge/plugins/modbus/modbus.toml
   type: config|noreplace
@@ -44,7 +44,7 @@ contents:
     group: tedge
     mode: 0644
 
-# System D Unit File
+# SystemD Unit File
 - src: ./tedge-modbus-plugin.service
   dst: /lib/systemd/system/tedge-modbus-plugin.service
   file_info:
