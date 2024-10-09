@@ -26,12 +26,23 @@ contents:
   file_info:
     mode: 0644
 
-# Empty modbus config
-# - dst: /etc/tedge/plugins/modbus/modbus.toml
-#   type: config
-#   # Empty device config
-# - dst: /etc/tedge/plugins/modbus/devices.toml
-#   type: config
+# Example modbus config
+- src: config/modbus.toml
+  dst: /etc/tedge/plugins/modbus/modbus.toml
+  type: config|noreplace
+  file_info:
+    owner: tedge
+    group: tedge
+    mode: 0644
+
+# Example device config
+- src: config/devices.toml
+  dst: /etc/tedge/plugins/modbus/devices.toml
+  type: config|noreplace
+  file_info:
+    owner: tedge
+    group: tedge
+    mode: 0644
 
 # System D Unit File
 - src: ./tedge-modbus-plugin.service
