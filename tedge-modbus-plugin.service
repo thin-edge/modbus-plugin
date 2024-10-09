@@ -3,7 +3,8 @@ Description=Modbus Reader
 
 [Service]
 User=root
-Restart=on-failure
+Restart=always
+RestartSec=5
 ExecStart=/usr/bin/python3 -m tedge_modbus.reader -l /var/log/tedge-modbus-plugin/modbus.log
 
 [Install]
