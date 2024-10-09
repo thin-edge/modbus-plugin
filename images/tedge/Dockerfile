@@ -7,6 +7,7 @@ COPY tedge_modbus /build/tedge_modbus
 COPY operations /build/operations
 COPY scripts /build/scripts
 COPY nfpm.yaml /build/nfpm.yaml
+COPY config /build/config
 COPY tedge-modbus-plugin.service /build/tedge-modbus-plugin.service
 # Build Package
 RUN nfpm pkg --packager deb --target /tmp/modbus-plugin_all.deb
