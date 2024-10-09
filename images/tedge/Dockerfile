@@ -11,7 +11,7 @@ COPY tedge-modbus-plugin.service /build/tedge-modbus-plugin.service
 # Build Package
 RUN nfpm pkg --packager deb --target /tmp/modbus-plugin_all.deb
 
-FROM ghcr.io/thin-edge/tedge-demo-main-systemd:20240319.1412
+FROM ghcr.io/thin-edge/tedge-demo-main-systemd:latest
 # Install Modbus Plugin
 COPY --from=build-stage /tmp/modbus-plugin_all.deb /tmp/modbus-plugin_all.deb
 RUN apt-get update \
@@ -19,13 +19,6 @@ RUN apt-get update \
     /tmp/modbus-plugin_all.deb \
     && rm /tmp/modbus-plugin_all.deb
 
-#Add modbus and device config
-COPY images/tedge/config/devices.toml /etc/tedge/plugins/modbus/devices.toml
-COPY images/tedge/config/modbus.toml /etc/tedge/plugins/modbus/modbus.toml
-RUN chmod 666 /etc/tedge/plugins/modbus/modbus.toml
-RUN chmod 666 /etc/tedge/plugins/modbus/devices.toml
-
-#Add confguration plugin config
+# Add confguration plugin config
 COPY images/tedge/config/tedge-configuration-plugin.toml /etc/tedge/plugins/tedge-configuration-plugin.toml
 COPY images/tedge/config/tedge-log-plugin.toml /etc/tedge/plugins/tedge-log-plugin.toml
-
