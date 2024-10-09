@@ -1,45 +1,8 @@
 #!/bin/sh
 set -e
 
-add_smartrest_template() {
-        # Add a new Cumulocity IoT SmartRest template to the thin-edge.io settings
-        template_name="$1"
-        EXISTING_TEMPLATES=$(tedge config get c8y.smartrest.templates | tr -d '\\[]" ')
-        UPDATED_TEMPLATES=
-
-        if [ -z "$template_name" ]; then
-                echo "Invalid template name given. Template name must not be empty." >&2
-                return 1
-        fi
-
-        EXISTS=0
-        if [ -n "$EXISTING_TEMPLATES" ]; then
-                for value in $(echo "$EXISTING_TEMPLATES" | tr ',' '\n '); do
-                        if [ "$value" = "$template_name" ]; then
-                                EXISTS=1
-                                break
-                        fi
-                done
-        fi
-        
-        if [ "$EXISTS" -eq 1 ]; then
-                echo "c8y.smartrest.template has already been added. name=$template_name" >&2
-                return
-        fi
-
-        if [ -n "$EXISTING_TEMPLATES" ]; then
-                UPDATED_TEMPLATES="${EXISTING_TEMPLATES},$template_name"
-        else
-                UPDATED_TEMPLATES="$template_name"
-        fi
-
-        if [ -n "$UPDATED_TEMPLATES" ]; then
-                tedge config set c8y.smartrest.templates "$UPDATED_TEMPLATES"
-                tedge refresh-bridges
-        fi
-}
-
-add_smartrest_template modbus
+tedge config add c8y.smartrest.templates modbus
+tedge refresh-bridges
 
 # Automatically added by thin-edge.io
 if [ $1 -eq 1 ] && [ -x "/usr/lib/systemd/systemd-update-helper" ]; then
