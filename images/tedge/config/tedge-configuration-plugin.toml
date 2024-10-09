@@ -4,6 +4,6 @@ files = [
     { path = '/etc/mosquitto/conf.d/mosquitto.conf', type = 'mosquitto.conf', user = 'root', group = 'root', mode = 0o644 },
     { path = '/etc/collectd/collectd.conf', type = 'collectd.conf', user = 'root', group = 'root', mode = 0o644 },
     { path = '/etc/c8y-command-plugin/env', type = 'shell', user = 'tedge', group = 'tedge', mode = 0o644 },
-    {path = '/etc/tedge/plugins/modbus/modbus.toml', type='modbus'},
-    {path = '/etc/tedge/plugins/modbus/devices.toml', type='modbus-devices'}
+    { path = '/etc/tedge/plugins/modbus/modbus.toml', type='modbus', owner='tedge', group='tedge', mode=0o644 },
+    { path = '/etc/tedge/plugins/modbus/devices.toml', type='modbus-devices', owner='tedge', group='tedge', mode=0o644 },
 ]
