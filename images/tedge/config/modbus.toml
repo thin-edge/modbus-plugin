@@ -1,6 +1,0 @@
-[modbus]
-pollinterval=5
-
-[thinedge]
-mqtthost="127.0.0.1"
-mqttport=1883
