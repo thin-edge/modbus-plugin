@@ -1,5 +1,7 @@
-#DEB PACKAGES
+#Linux PACKAGES
 *.deb
+*.rpm
+dist/
 
 #Test files
 /output
