@@ -58,6 +58,7 @@ contents:
 overrides:
   deb:
     depends:
+      - tedge (>= 1.2.0)
       - python (>= 3.8.0) | python3 (>= 3.8.0)
       - python3-paho-mqtt
       - python3-pymodbus
@@ -72,6 +73,7 @@ overrides:
       postremove: ./scripts/deb/postrm
   rpm:
     depends:
+      - tedge >= 1.2.0
       - python3
       - python3-paho-mqtt
       - python3-pymodbus
