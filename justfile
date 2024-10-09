@@ -26,6 +26,12 @@ lint:
     .venv/bin/python3 -m pylint operations
     .venv/bin/python3 -m pylint tedge_modbus
 
+# Build linux packages
+build:
+    mkdir -p dist/
+    nfpm package --packager deb --target dist/
+    nfpm package --packager rpm --target dist/
+
 # Build deb package
 setup:
     @mkdir -p ./tests/data
