@@ -5,6 +5,5 @@ pyModbusTCP
 pyserial-asyncio
 tomli~=2.0.1
 pip~=23.3
-setuptools~=65.5.0
-requests~=2.31.0
+requests~=2.32.0
 toml
