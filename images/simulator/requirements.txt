@@ -1,2 +1,2 @@
-aiohttp==3.9.2
+aiohttp~=3.10.2
 pymodbus==3.5.4
