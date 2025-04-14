@@ -34,3 +34,8 @@ class Context:
             return result.stdout.strip()
         except subprocess.CalledProcessError as proc_err:
             raise proc_err
+
+    @property
+    def base_config(self):
+        config_path = config_dir / "modbus.toml"
+        return toml.load(config_path)

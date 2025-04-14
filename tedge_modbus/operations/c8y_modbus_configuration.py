@@ -9,9 +9,8 @@ from .context import Context
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger.info("New c8y_ModbusConfiguration operation")
 
 
 def run(arguments, context: Context):
@@ -20,16 +19,15 @@ def run(arguments, context: Context):
         raise ValueError(
             f"Expected 4 arguments in smart rest template. Got {len(arguments)}"
         )
-    logger.debug("Arguments: %s", arguments)
+    # Get device configuration
+    modbus_config = context.base_config
+    loglevel = modbus_config["modbus"]["loglevel"] or "INFO"
+    logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
+    logger.info("New c8y_ModbusConfiguration operation")
+    logger.debug("Current configuration: %s", modbus_config)
     transmit_rate = int(arguments[2])
     polling_rate = int(arguments[3])
     logger.debug("transmitRate: %d, pollingRate: %d", transmit_rate, polling_rate)
-
-    # Get device configuration
-    config_path = context.config_dir / "modbus.toml"
-    logger.info("Read mapping toml from %s", config_path)
-    modbus_config = toml.load(config_path)
-    logger.debug("Current configuration: %s", modbus_config)
 
     # Update configuration
     modbus_config["modbus"]["transmitinterval"] = transmit_rate
