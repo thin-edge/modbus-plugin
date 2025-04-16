@@ -34,10 +34,9 @@ def run(arguments, context: Context):
     modbus_config["modbus"]["pollinterval"] = polling_rate
 
     # Save to file
-    logger.info("Saving new configuration to %s", config_path)
-    with open(config_path, "w", encoding="utf8") as f:
+    logger.info("Saving new configuration to %s", context.base_config_path)
+    with open(context.base_config_path, "w", encoding="utf8") as f:
         toml.dump(modbus_config, f)
-    logger.info("New configuration saved to %s", config_path)
 
     # Update managedObject
     logger.debug("Updating managedObject with new configuration")

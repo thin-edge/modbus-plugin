@@ -86,9 +86,9 @@ def parse_arguments(arguments) -> ModebusDevice:
 
 
 def run(arguments, context: Context):
+    """main"""
     loglevel = context.base_config["modbus"]["loglevel"] or "INFO"
     logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
-    """main"""
     logger.info("New c8y_ModbusDevice operation")
     # Check and store arguments
     if len(arguments) != 8:
