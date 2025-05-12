@@ -8,7 +8,7 @@ Suite Setup     Set Main Device
 *** Test Cases ***
 Device should have the fragment c8y_ModbusConfiguration
     Cumulocity.Managed Object Should Have Fragments    c8y_ModbusConfiguration
-    Cumulocity.Managed Object Should Have Fragment Values    c8y_ModbusConfiguration.pollingRate=2
+    Cumulocity.Managed Object Should Have Fragment Values    c8y_ModbusConfiguration.pollingRate\=2
 
 ChildDevice TestCase1 should be created
     Cumulocity.Should Be A Child Device Of Device    ${DEVICE_ID}:device:TestCase1
