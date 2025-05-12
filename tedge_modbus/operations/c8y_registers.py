@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Cumulocity IoT c8y_Registers operation handler
-"""
+"""Cumulocity IoT c8y_Registers operation handler"""
 from .context import Context
 
 

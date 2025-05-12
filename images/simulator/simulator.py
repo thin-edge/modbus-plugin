@@ -1,5 +1,4 @@
-"""Modbus simulator
-"""
+"""Modbus simulator"""
 
 # See also example https://pymodbus.readthedocs.io/en/latest/source/example/updating_server.html
 import logging

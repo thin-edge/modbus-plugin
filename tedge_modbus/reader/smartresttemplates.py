@@ -1,5 +1,4 @@
-"""Cumulocity IoT SmartREST template definitions
-"""
+"""Cumulocity IoT SmartREST template definitions"""
 
 # pylint: disable=line-too-long
 SMARTREST_TEMPLATES = [
