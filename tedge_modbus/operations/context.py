@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import toml
 
+
 @dataclass
 class Context:
     """Operation context to provide access to common settings"""
