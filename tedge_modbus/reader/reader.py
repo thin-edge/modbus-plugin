@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Modbus reader
-"""
+"""Modbus reader"""
 import argparse
 import json
 import logging

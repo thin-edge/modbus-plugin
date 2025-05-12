@@ -1,5 +1,4 @@
-"""Banner for cli friendly applications
-"""
+"""Banner for cli friendly applications"""
 
 # Generated using pyfiglet
 # import pyfiglet; BANNER = pyfiglet.figlet_format("Modbus plugin for thin-edge.io")

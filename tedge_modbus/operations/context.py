@@ -1,5 +1,4 @@
-"""Operation context
-"""
+"""Operation context"""
 
 import subprocess
 from dataclasses import dataclass

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Cumulocity IoT Modbus device operation handler
-"""
+"""Cumulocity IoT Modbus device operation handler"""
 import logging
 from dataclasses import dataclass
 import requests
