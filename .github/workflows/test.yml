@@ -27,7 +27,7 @@ jobs:
     needs: [approve]
     environment:
       name: Test Auto
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       COMPOSE_PROJECT_NAME: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
       DEVICE_ID: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
