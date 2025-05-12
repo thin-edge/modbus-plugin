@@ -83,10 +83,11 @@ If used with Cumulocity IoT, the plugins can be managed via the Device Managemen
 
 ### modbus.toml
 
-This includes the basic configuration for the plugin such as poll rate and the connection to thin-edge (the MQTT broker needs to match the one of tedge and is probably the default `localhost:1883`).
+This includes the basic configuration for the plugin such as poll rate and the connection to thin-edge.io (the MQTT broker needs to match the one of tedge and is probably the default `localhost:1883`).
 
 - poll rate
-- connection to thin-edge (MQTT broker needs to match the one of tedge)
+- connection to thin-edge.io (MQTT broker needs to match the one of tedge)
+- log level (e.g. INFO, WARN, ERROR)
 
 ### devices.toml
 
