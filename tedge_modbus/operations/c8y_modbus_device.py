@@ -10,7 +10,7 @@ from .context import Context
 logger = logging.getLogger("c8y_ModbusDevice")
 logging.basicConfig(
     filename="/var/log/tedge/c8y_ModbusDevice.log",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
@@ -87,6 +87,8 @@ def parse_arguments(arguments) -> ModebusDevice:
 
 def run(arguments, context: Context):
     """main"""
+    loglevel = context.base_config["modbus"]["loglevel"] or "INFO"
+    logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
     logger.info("New c8y_ModbusDevice operation")
     # Check and store arguments
     if len(arguments) != 8:

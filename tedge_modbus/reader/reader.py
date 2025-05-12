@@ -55,7 +55,7 @@ class ModbusPoll:
     def __init__(self, config_dir=".", logfile=None):
         self.config_dir = config_dir
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         if logfile is not None:
             fh = logging.FileHandler(logfile)
             fh.setFormatter(
@@ -76,6 +76,8 @@ class ModbusPoll:
         if len(new_base_config) > 1 and new_base_config != self.base_config:
             restart_required = True
             self.base_config = new_base_config
+        loglevel = self.base_config["modbus"]["loglevel"] or "INFO"
+        self.logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
         new_devices = self.read_device_definition(
             f"{self.config_dir}/{DEVICES_CONFIG_NAME}"
         )
@@ -375,7 +377,7 @@ class ModbusPoll:
                 client_id = "modbus-client"
                 client = mqtt_client.Client(client_id)
                 client.connect(broker, port)
-                self.logger.debug("Connected to MQTTT broker at %s:%d", broker, port)
+                self.logger.debug("Connected to MQTT broker at %s:%d", broker, port)
                 return client
             except Exception as e:
                 self.logger.error("Failed to connect to thin-edge.io: %s", e)
@@ -449,7 +451,7 @@ def main():
         parser.add_argument("-l", "--logfile", required=False)
         args = parser.parse_args()
         logging.basicConfig(
-            level=logging.DEBUG,
+            level=logging.INFO,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         )
         if args.configdir is not None:

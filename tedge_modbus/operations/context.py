@@ -3,6 +3,7 @@
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
+import toml
 
 
 @dataclass
@@ -14,6 +15,7 @@ class Context:
     port = 1883
     client_id = "c8y_ModbusConfiguration-operation-client"
     config_dir = Path("/etc/tedge/plugins/modbus")
+    base_config_path = config_dir / "modbus.toml"
 
     @property
     def c8y_proxy(self) -> str:
@@ -34,3 +36,8 @@ class Context:
             return result.stdout.strip()
         except subprocess.CalledProcessError as proc_err:
             raise proc_err
+
+    @property
+    def base_config(self):
+        """loads the default modbus.toml file and gives it back as dict"""
+        return toml.load(self.base_config_path)
