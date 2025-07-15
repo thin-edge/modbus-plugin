@@ -3,6 +3,7 @@
 import json
 import struct
 import sys
+import math
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
@@ -26,11 +27,9 @@ class ModbusMapper:
 
     device = None
 
-    # store data to be able to compare them later
-    data = {"hr": {}, "ir": {}, "co": {}, "di": {}}
-
     def __init__(self, device):
         self.device = device
+        self.data = {"hr": {}, "ir": {}, "co": {}, "di": {}}
 
     def validate(self, register_def):
         """Validate definition"""
@@ -94,21 +93,43 @@ class ModbusMapper:
             value = self.parse_int(buffer, register_def.get("signed"), mask)
 
         if register_def.get("measurementmapping") is not None:
-            value = (
+            scaled_value = (
                 value
                 * (register_def.get("multiplier") or 1)
                 * (10 ** (register_def.get("decimalshiftright") or 0))
                 / (register_def.get("divisor") or 1)
             )
-            data = register_def["measurementmapping"]["templatestring"].replace(
-                "%%", str(value)
-            )
-            messages.append(
-                MappedMessage(
-                    data,
-                    topics["measurement"].replace("CHILD_ID", self.device.get("name")),
+
+            on_change = register_def.get("on_change", False)
+
+            last_value = self.data.get(register_type, {}).get(register_key)
+
+            has_changed = False
+            last_value = self.data.get(register_type, {}).get(register_key)
+
+            if last_value is not None:
+                if isinstance(scaled_value, float):
+                    has_changed = not isinstance(last_value, float) or not math.isclose(
+                        scaled_value, last_value
+                    )
+                else:
+                    has_changed = last_value != scaled_value
+
+            if not on_change or last_value is None or has_changed:
+                data = register_def["measurementmapping"]["templatestring"].replace(
+                    "%%", str(scaled_value)
                 )
-            )
+                messages.append(
+                    MappedMessage(
+                        data,
+                        topics["measurement"].replace(
+                            "CHILD_ID", self.device.get("name")
+                        ),
+                    )
+                )
+                self.data.setdefault(register_type, {})[register_key] = scaled_value
+
+            value = scaled_value
         if register_def.get("alarmmapping") is not None:
             messages.extend(
                 self.check_alarm(
@@ -121,7 +142,9 @@ class ModbusMapper:
                     value, register_def.get("eventmapping"), register_type, register_key
                 )
             )
-        self.data[register_type][register_key] = value
+
+        if register_def.get("measurementmapping") is None:
+            self.data.setdefault(register_type, {})[register_key] = value
         return messages
 
     def map_coil(self, bits, coil_definition):

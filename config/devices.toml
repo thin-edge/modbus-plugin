@@ -6,6 +6,8 @@ ip="simulator" # Modbus server IP
 port=502 # Modbus server Port
 protocol="TCP" # only support for TCP now
 littlewordendian=false
+#pollinterval=1  # Overrides global setting; device publishes at this interval
+
 
 [[device.registers]]
 number=3 # register number
@@ -18,7 +20,7 @@ decimalshiftright=0
 input=false # true = Input Register false = Holding Register
 #see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
 measurementmapping.templatestring="{\"Test\":{\"Int16\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
-
+#on_change=true # Send data only on value change
 
 [[device.registers]]
 number=6 
