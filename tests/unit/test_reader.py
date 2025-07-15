@@ -1,15 +1,17 @@
 import os
 import sys
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, parent_dir)
 import unittest
 from unittest.mock import patch, MagicMock
 from tedge_modbus.reader.reader import ModbusPoll
 
+
 class TestReaderPollingInterval(unittest.TestCase):
 
-    @patch('tedge_modbus.reader.reader.ModbusPoll.read_base_definition')
-    @patch('tedge_modbus.reader.reader.ModbusPoll.read_device_definition')
+    @patch("tedge_modbus.reader.reader.ModbusPoll.read_base_definition")
+    @patch("tedge_modbus.reader.reader.ModbusPoll.read_device_definition")
     def setUp(self, mock_read_device, mock_read_base):
         """Set up a ModbusPoll instance with mocked file reading."""
         # Mock config to prevent errors during initialization
@@ -27,13 +29,11 @@ class TestReaderPollingInterval(unittest.TestCase):
         THEN it should use the device's interval.
         """
         # GIVEN a global poll interval
-        self.poll.base_config = {
-            "modbus": {"pollinterval": 5}
-        }
+        self.poll.base_config = {"modbus": {"pollinterval": 5}}
         # AND a device with its own poll_interval
         device_config = {
             "name": "fast_poller",
-            "poll_interval": 1 # This should be used
+            "poll_interval": 1,  # This should be used
         }
 
         mock_poll_model = MagicMock()
@@ -41,7 +41,11 @@ class TestReaderPollingInterval(unittest.TestCase):
 
         # WHEN poll_device is called
         # We patch get_data_from_device to avoid real network calls
-        with patch.object(self.poll, 'get_data_from_device', return_value=(None, None, None, None, None)):
+        with patch.object(
+            self.poll,
+            "get_data_from_device",
+            return_value=(None, None, None, None, None),
+        ):
             self.poll.poll_device(device_config, mock_poll_model, mock_mapper)
 
         # THEN the scheduler should be called with the device's interval
@@ -57,19 +61,19 @@ class TestReaderPollingInterval(unittest.TestCase):
         THEN it should use the global pollinterval.
         """
         # GIVEN a global poll interval
-        self.poll.base_config = {
-            "modbus": {"pollinterval": 5} # This should be used
-        }
+        self.poll.base_config = {"modbus": {"pollinterval": 5}}  # This should be used
         # AND a device without its own poll_interval
-        device_config = {
-            "name": "normal_poller"
-        }
+        device_config = {"name": "normal_poller"}
 
         mock_poll_model = MagicMock()
         mock_mapper = MagicMock()
 
         # WHEN poll_device is called
-        with patch.object(self.poll, 'get_data_from_device', return_value=(None, None, None, None, None)):
+        with patch.object(
+            self.poll,
+            "get_data_from_device",
+            return_value=(None, None, None, None, None),
+        ):
             self.poll.poll_device(device_config, mock_poll_model, mock_mapper)
 
         # THEN the scheduler should be called with the global interval
