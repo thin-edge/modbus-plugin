@@ -3,6 +3,7 @@
 import json
 import struct
 import sys
+import math
 from datetime import datetime, timezone
 from dataclasses import dataclass
 
