@@ -101,25 +101,27 @@ class ModbusMapper:
                 / (register_def.get("divisor") or 1)
             )
 
-            
             on_change = register_def.get("on_change", False)
-            
-            
+
             last_value = self.data.get(register_type, {}).get(register_key)
 
-            if not on_change or last_value is None or last_value != scaled_value:
+            if not on_change or last_value is None or \
+                (isinstance(scaled_value, float) and not math.isclose(scaled_value, last_value)) or \
+                (not isinstance(scaled_value, float) and last_value != scaled_value):
                 data = register_def["measurementmapping"]["templatestring"].replace(
                     "%%", str(scaled_value)
                 )
                 messages.append(
                     MappedMessage(
                         data,
-                        topics["measurement"].replace("CHILD_ID", self.device.get("name")),
+                        topics["measurement"].replace(
+                            "CHILD_ID", self.device.get("name")
+                        ),
                     )
                 )
-                
+
                 self.data.setdefault(register_type, {})[register_key] = scaled_value
-                
+
             value = scaled_value
         if register_def.get("alarmmapping") is not None:
             messages.extend(
@@ -133,7 +135,7 @@ class ModbusMapper:
                     value, register_def.get("eventmapping"), register_type, register_key
                 )
             )
-        
+
         if register_def.get("measurementmapping") is None:
             self.data.setdefault(register_type, {})[register_key] = value
         return messages

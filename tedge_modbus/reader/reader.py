@@ -258,7 +258,9 @@ class ModbusPoll:
         else:
             self.logger.error("Failed to poll device %s: %s", device["name"], error)
 
-        interval = device.get("poll_interval", self.base_config["modbus"]["pollinterval"])
+        interval = device.get(
+            "poll_interval", self.base_config["modbus"]["pollinterval"]
+        )
         self.poll_scheduler.enter(
             interval,
             1,
