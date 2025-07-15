@@ -27,11 +27,9 @@ class ModbusMapper:
 
     device = None
 
-    # store data to be able to compare them later
-    data = {"hr": {}, "ir": {}, "co": {}, "di": {}}
-
     def __init__(self, device):
         self.device = device
+        self.data = {"hr": {}, "ir": {}, "co": {}, "di": {}}
 
     def validate(self, register_def):
         """Validate definition"""
@@ -103,12 +101,12 @@ class ModbusMapper:
             )
 
             on_change = register_def.get("on_change", False)
-
+            
             last_value = self.data.get(register_type, {}).get(register_key)
-
+     
             if not on_change or last_value is None or \
-                (isinstance(scaled_value, float) and not math.isclose(scaled_value, last_value)) or \
-                (not isinstance(scaled_value, float) and last_value != scaled_value):
+            (isinstance(scaled_value, float) and not math.isclose(scaled_value, last_value)) or \
+            (not isinstance(scaled_value, float) and last_value != scaled_value):
                 data = register_def["measurementmapping"]["templatestring"].replace(
                     "%%", str(scaled_value)
                 )
