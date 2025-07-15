@@ -142,3 +142,8 @@ dmypy.json
 .idea/modules.xml
 .idea/
 docker/
+
+
+# macOS system files
+.DS_Store
+
