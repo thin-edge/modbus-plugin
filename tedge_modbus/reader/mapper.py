@@ -104,15 +104,18 @@ class ModbusMapper:
 
             last_value = self.data.get(register_type, {}).get(register_key)
 
-            if (
-                not on_change
-                or last_value is None
-                or (
-                    isinstance(scaled_value, float)
-                    and not math.isclose(scaled_value, last_value)
-                )
-                or (not isinstance(scaled_value, float) and last_value != scaled_value)
-            ):
+            has_changed = False
+            last_value = self.data.get(register_type, {}).get(register_key)
+
+            if last_value is not None:
+                if isinstance(scaled_value, float):
+                    has_changed = not isinstance(last_value, float) or not math.isclose(
+                        scaled_value, last_value
+                    )
+                else:
+                    has_changed = last_value != scaled_value
+
+            if not on_change or last_value is None or has_changed:
                 data = register_def["measurementmapping"]["templatestring"].replace(
                     "%%", str(scaled_value)
                 )
@@ -124,7 +127,6 @@ class ModbusMapper:
                         ),
                     )
                 )
-
                 self.data.setdefault(register_type, {})[register_key] = scaled_value
 
             value = scaled_value
