@@ -7,6 +7,7 @@ port=502 # Modbus server Port
 protocol="TCP" # only support for TCP now
 littlewordendian=false
 #pollinterval=1  # Overrides global setting; device publishes at this interval
+#combinemeasurements=true # Overrides global setting; Combines all measurements of a device to reduce the number of created measurements in the cloud
 
 
 [[device.registers]]
