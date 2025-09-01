@@ -84,16 +84,9 @@ class ModbusPoll:
         # Add Serial Config into Device Config
         for device in new_devices["device"]:
             if device["protocol"] == "RTU":
-                if device.get("port", None) is None:
-                    device["port"] = self.base_config["serial"]["port"]
-                if device.get("baudrate", None) is None:
-                    device["baudrate"] = self.base_config["serial"]["baudrate"]
-                if device.get("stopbits", None) is None:
-                    device["stopbits"] = self.base_config["serial"]["stopbits"]
-                if device.get("parity", None) is None:
-                    device["parity"] = self.base_config["serial"]["parity"]
-                if device.get("databits", None) is None:
-                    device["databits"] = self.base_config["serial"]["databits"]
+                for key in self.base_config["serial"]:
+                    if device.get(key, None) is None:
+                        device[key] = self.base_config["serial"][key]
         if (
             len(new_devices) >= 1
             and new_devices.get("device")
