@@ -29,7 +29,13 @@ def run(arguments, context: Context):
     stop_bits = int(arguments[3])
     parity = int(arguments[4])
     data_bits = int(arguments[5])
-    logger.debug("baudRate: %d, stopBits: %d, parity: %s, dataBits: %d", baud_rate, stop_bits, parity, data_bits)
+    logger.debug(
+        "baudRate: %d, stopBits: %d, parity: %s, dataBits: %d",
+        baud_rate,
+        stop_bits,
+        parity,
+        data_bits,
+    )
 
     # Update configuration
     modbus_config["serial"]["baudrate"] = baud_rate
@@ -38,7 +44,7 @@ def run(arguments, context: Context):
     modbus_config["serial"]["databits"] = data_bits
 
     # Save to file
-    logger.info("Saving new configuration to %s", context.base_config_path)
+    logger.info("Saving new serial configuration to %s", context.base_config_path)
     with open(context.base_config_path, "w", encoding="utf8") as f:
         toml.dump(modbus_config, f)
 
@@ -46,11 +52,12 @@ def run(arguments, context: Context):
     logger.debug("Updating managedObject with new configuration")
 
     config = {
-        "baudRate":baud_rate,
-        "stopBits":stop_bits,
-        "parity":parity,
-        "dataBits":data_bits
+        "baudRate": baud_rate,
+        "stopBits": stop_bits,
+        "parity": parity,
+        "dataBits": data_bits,
     }
+    # pylint: disable=duplicate-code
     mqtt_publish(
         topic="te/device/main///twin/c8y_SerialConfiguration",
         payload=json.dumps(config),

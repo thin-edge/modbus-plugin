@@ -281,31 +281,33 @@ class ModbusPoll:
             (device, poll_model, mapper),
         )
 
-    def get_data_from_device(self, device, poll_model):
-        """Get Modbus information from the device"""
-        # pylint: disable=too-many-locals
-        client = None
+    def get_modbus_client(self, device):
+        """Get Modbus client"""
         if device["protocol"] == "RTU":
-            client = ModbusSerialClient(
+            return ModbusSerialClient(
                 port=device["port"],
                 baudrate=device["baudrate"],
                 stopbits=device["stopbits"],
                 parity=device["parity"],
                 bytesize=device["databits"],
             )
-        elif device["protocol"] == "TCP":
-            client = ModbusTcpClient(
+        if device["protocol"] == "TCP":
+            return ModbusTcpClient(
                 host=device["ip"],
                 port=device["port"],
-                # TODO: Check if these parameters really supported by ModbusTcpClient? 
+                # TODO: Check if these parameters really supported by ModbusTcpClient?
                 auto_open=True,
                 auto_close=True,
                 debug=True,
             )
-        else:
-            raise ValueError(
-                "Expected protocol to be RTU or TCP. Got " + device["protocol"] + "."
-            )
+        raise ValueError(
+            "Expected protocol to be RTU or TCP. Got " + device["protocol"] + "."
+        )
+
+    def get_data_from_device(self, device, poll_model):
+        """Get Modbus information from the device"""
+        # pylint: disable=too-many-locals
+        client = self.get_modbus_client(device)
         holding_register, input_registers, coils, discrete_input = poll_model
         hr_results = {}
         ir_result = {}
