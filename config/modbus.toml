@@ -2,6 +2,13 @@
 pollinterval=2
 loglevel="INFO"
 
+[serial]
+interface="/dev/ttyRS485"
+baudrate=9600
+stopbits=2
+parity="N"
+databits=8
+
 [thinedge]
 mqtthost="127.0.0.1"
 mqttport=1883
