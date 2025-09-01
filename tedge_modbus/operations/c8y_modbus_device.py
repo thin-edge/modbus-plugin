@@ -42,8 +42,9 @@ def get_device_from_mapping(target: ModebusDevice, mapping):
     device = {}
     device["name"] = target.child_name
     device["address"] = int(target.modbus_address)
-    device["ip"] = target.modbus_server
-    device["port"] = 502
+    if target.modbus_type == "TCP":
+        device["ip"] = target.modbus_server
+        device["port"] = 502
     device["protocol"] = target.modbus_type
     device["littlewordendian"] = True
 
@@ -99,12 +100,6 @@ def run(arguments, context: Context):
         )
     config_path = context.config_dir / "devices.toml"
     target = parse_arguments(arguments)
-
-    # Fail if modbus_type is not TCP
-    if target.modbus_type != "TCP":
-        raise ValueError(
-            "Expected modbus_type to be TCP. Got " + target.modbus_type + "."
-        )
 
     # Update external id of child device
     logger.debug("Create external id for child device %s", target.device_id)
