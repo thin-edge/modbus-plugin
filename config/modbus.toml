@@ -3,7 +3,7 @@ pollinterval=2
 loglevel="INFO"
 
 [serial]
-interface="/dev/ttyRS485"
+port="/dev/ttyRS485"
 baudrate=9600
 stopbits=2
 parity="N"

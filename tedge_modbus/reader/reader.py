@@ -11,7 +11,7 @@ import time
 
 import tomli
 from paho.mqtt import client as mqtt_client
-from pymodbus.client.tcp import ModbusTcpClient
+from pymodbus.client import ModbusTcpClient, ModbusSerialClient
 from pymodbus.exceptions import ConnectionException
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
@@ -81,6 +81,19 @@ class ModbusPoll:
         new_devices = self.read_device_definition(
             f"{self.config_dir}/{DEVICES_CONFIG_NAME}"
         )
+        # Add Serial Config into Device Config
+        for device in new_devices["device"]:
+            if device["protocol"] == "RTU":
+                if device.get("port", None) is None:
+                    device["port"] = self.base_config["serial"]["port"]
+                if device.get("baudrate", None) is None:
+                    device["baudrate"] = self.base_config["serial"]["baudrate"]
+                if device.get("stopbits", None) is None:
+                    device["stopbits"] = self.base_config["serial"]["stopbits"]
+                if device.get("parity", None) is None:
+                    device["parity"] = self.base_config["serial"]["parity"]
+                if device.get("databits", None) is None:
+                    device["databits"] = self.base_config["serial"]["databits"]
         if (
             len(new_devices) >= 1
             and new_devices.get("device")
@@ -271,13 +284,28 @@ class ModbusPoll:
     def get_data_from_device(self, device, poll_model):
         """Get Modbus information from the device"""
         # pylint: disable=too-many-locals
-        client = ModbusTcpClient(
-            host=device["ip"],
-            port=device["port"],
-            auto_open=True,
-            auto_close=True,
-            debug=True,
-        )
+        client = None
+        if device["protocol"] == "RTU":
+            client = ModbusSerialClient(
+                port=device["port"],
+                baudrate=device["baudrate"],
+                stopbits=device["stopbits"],
+                parity=device["parity"],
+                bytesize=device["databits"],
+            )
+        elif device["protocol"] == "TCP":
+            client = ModbusTcpClient(
+                host=device["ip"],
+                port=device["port"],
+                # TODO: Check if these parameters really supported by ModbusTcpClient? 
+                auto_open=True,
+                auto_close=True,
+                debug=True,
+            )
+        else:
+            raise ValueError(
+                "Expected protocol to be RTU or TCP. Got " + device["protocol"] + "."
+            )
         holding_register, input_registers, coils, discrete_input = poll_model
         hr_results = {}
         ir_result = {}
@@ -413,11 +441,12 @@ class ModbusPoll:
             self.logger.debug("Update modbus info on child device")
             topic = f"te/device/{device['name']}///twin/c8y_ModbusDevice"
             config = {
-                "ipAddress": device["ip"],
                 "port": device["port"],
                 "address": device["address"],
                 "protocol": device["protocol"],
             }
+            if device["protocol"] == "TCP":
+                config["ipAddress"] = device["ip"]
             self.send_tedge_message(
                 MappedMessage(json.dumps(config), topic), retain=True, qos=1
             )
