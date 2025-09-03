@@ -27,7 +27,7 @@ def run(arguments, context: Context):
     logger.debug("Current configuration: %s", modbus_config)
     baud_rate = int(arguments[2])
     stop_bits = int(arguments[3])
-    parity = int(arguments[4])
+    parity = arguments[4]
     data_bits = int(arguments[5])
     logger.debug(
         "baudRate: %d, stopBits: %d, parity: %s, dataBits: %d",
