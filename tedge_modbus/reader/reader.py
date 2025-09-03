@@ -429,6 +429,22 @@ class ModbusPoll:
         self.send_tedge_message(
             MappedMessage(json.dumps(config), topic), retain=True, qos=1
         )
+        if base_config.get("serial") is None:
+            return
+        topic = "te/device/main///twin/c8y_SerialConfiguration"
+        baud_rate = base_config["serial"].get("baudrate")
+        stop_bits = base_config["serial"].get("stopbits")
+        parity = base_config["serial"].get("parity")
+        data_bits = base_config["serial"].get("databits")
+        config = {
+            "baudRate": baud_rate,
+            "stopBits": stop_bits,
+            "parity": parity,
+            "dataBits": data_bits,
+        }
+        self.send_tedge_message(
+            MappedMessage(json.dumps(config), topic), retain=True, qos=1
+        )
 
     def update_modbus_info_on_child_devices(self, devices):
         """Update the modbus information for the child devices"""
