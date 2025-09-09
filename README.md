@@ -155,7 +155,7 @@ As of now, the plugin only supports the following operations:
 
 - c8y_ModbusDevice
 - Mapping of registers to Measurements with c8y_ModbusConfiguration
-- c8ySerialConfiguration
+- c8y_SerialConfiguration
 
 To create a Cloud Fieldbus Device in Cumulocity IoT, you need first to create a Modbus protocol. Open the Device protocols page in your Device Management and add a new Modbus protocol.
 The configuration of your protocol depends on your Modbus Server. If you are using the Modbus Demo simulator, the you can use the following configuration:
