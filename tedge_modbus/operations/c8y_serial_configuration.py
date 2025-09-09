@@ -50,14 +50,13 @@ def run(arguments, context: Context):
 
     # Update managedObject
     logger.debug("Updating managedObject with new configuration")
-
+    # pylint: disable=duplicate-code
     config = {
         "baudRate": baud_rate,
         "stopBits": stop_bits,
         "parity": parity,
         "dataBits": data_bits,
     }
-    # pylint: disable=duplicate-code
     mqtt_publish(
         topic="te/device/main///twin/c8y_SerialConfiguration",
         payload=json.dumps(config),
