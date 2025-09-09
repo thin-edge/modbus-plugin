@@ -34,7 +34,7 @@ def run(arguments, context: Context):
     modbus_config["modbus"]["pollinterval"] = polling_rate
 
     # Save to file
-    logger.info("Saving new configuration to %s", context.base_config_path)
+    logger.info("Saving new modbus configuration to %s", context.base_config_path)
     with open(context.base_config_path, "w", encoding="utf8") as f:
         toml.dump(modbus_config, f)
 
@@ -45,6 +45,7 @@ def run(arguments, context: Context):
         "transmitRate": transmit_rate,
         "pollingRate": polling_rate,
     }
+    # pylint: disable=duplicate-code
     mqtt_publish(
         topic="te/device/main///twin/c8y_ModbusConfiguration",
         payload=json.dumps(config),

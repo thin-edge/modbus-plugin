@@ -29,7 +29,7 @@ Plugin for polling Modbus devices and publishing the data to thin-edge.io. If us
 
 ## Overview
 
-The plugin regularly polls Modbus devices and publishes the data to the thin-edge.io broker. The plugin is based on the [pymodbus](https://pymodbus.readthedocs.io/en/latest/) library. After installing, the plugin can be configured by changing the `modbus.toml` and `devices.toml` files. The plugin comes with an example config [4] with comments to get you started. Adding multiple servers should also be as simple as adding additional `[[device]]` sections for each IP address you want to poll.
+The plugin regularly polls Modbus devices and publishes the data to the thin-edge.io broker. The plugin is based on the [pymodbus](https://pymodbus.readthedocs.io/en/latest/) library. After installing, the plugin can be configured by changing the `modbus.toml` and `devices.toml` files. The plugin comes with an example config [4] with comments to get you started. Adding multiple servers should also be as simple as adding additional `[[device]]` sections for each IP address or serial address you want to poll.
 
 ## Requirements
 
@@ -83,9 +83,10 @@ If used with Cumulocity IoT, the plugins can be managed via the Device Managemen
 
 ### modbus.toml
 
-This includes the basic configuration for the plugin such as poll rate and the connection to thin-edge.io (the MQTT broker needs to match the one of tedge and is probably the default `localhost:1883`).
+This includes the basic configuration for the plugin such as poll rate and the connection to thin-edge.io (the MQTT broker needs to match the one of tedge and is probably the default `localhost:1883`). It also includes the configuration of the main serial port used by modbus RTU devices. Make sure the serial port is properly configured to for the hardware in use.
 
 - poll rate
+- serial configuration
 - connection to thin-edge.io (MQTT broker needs to match the one of tedge)
 - log level (e.g. INFO, WARN, ERROR)
 
@@ -154,6 +155,7 @@ As of now, the plugin only supports the following operations:
 
 - c8y_ModbusDevice
 - Mapping of registers to Measurements with c8y_ModbusConfiguration
+- c8y_SerialConfiguration
 
 To create a Cloud Fieldbus Device in Cumulocity IoT, you need first to create a Modbus protocol. Open the Device protocols page in your Device Management and add a new Modbus protocol.
 The configuration of your protocol depends on your Modbus Server. If you are using the Modbus Demo simulator, the you can use the following configuration:
@@ -163,6 +165,8 @@ The configuration of your protocol depends on your Modbus Server. If you are usi
 After creating the protocol, you can add a new Cloud Fieldbus Device. Select the Modbus Tab on your thin-edge.io and add a new tcp device. If you are using the Modbus Demo simulator, you need to add the IP-Address of your Docker host, as host names are not supported by the UI.
 
 ![Image](./doc/tcp_device.png)
+
+For adding a modbus RTU device you need to use unit-ID of the slave device in the configuration.
 
 ## Testing
 

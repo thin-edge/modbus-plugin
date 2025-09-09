@@ -6,6 +6,7 @@ from . import c8y_coils
 from . import c8y_modbus_configuration
 from . import c8y_modbus_device
 from . import c8y_registers
+from . import c8y_serial_configuration
 from .context import Context
 
 
@@ -20,6 +21,8 @@ def main():
         run = c8y_modbus_device.run
     elif command == "c8y_Registers":
         run = c8y_registers.run
+    elif command == "c8y_SerialConfiguration":
+        run = c8y_serial_configuration.run
 
     arguments = sys.argv[2].split(",") if len(sys.argv) > 2 else []
     context = Context()
