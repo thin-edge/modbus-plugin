@@ -206,7 +206,7 @@ class ModbusPoll:
             ir_result,
             error,
         ) = self.get_data_from_device(device, poll_model)
-        combine_measurements = device.get(
+        device_combine_measurements = device.get(
             "combinemeasurements",
             self.base_config["modbus"].get("combinemeasurements", False),
         )
@@ -236,16 +236,13 @@ class ModbusPoll:
                             result = self.read_register(
                                 hr_results, address=register_number, count=num_registers
                             )
-                        if combine_measurements:
-                            msgs, temp = mapper.map_register(
-                                result, register_definition, combine_measurements
-                            )
-                            if combined_measuerement is not None:
-                                combined_measuerement.extend_data(temp)
-                            else:
-                                combined_measuerement = temp
-                        else:
-                            msgs = mapper.map_register(result, register_definition)
+                        msgs, temp = mapper.map_register(
+                            result, register_definition, device_combine_measurements
+                        )
+                        if combined_measuerement is not None and temp is not None:
+                            combined_measuerement.extend_data(temp)
+                        elif temp is not None:
+                            combined_measuerement = temp
                         for msg in msgs:
                             self.send_tedge_message(msg)
                     except Exception as e:

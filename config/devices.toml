@@ -21,6 +21,7 @@ decimalshiftright=0
 input=false # true = Input Register false = Holding Register
 #see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
 measurementmapping.templatestring="{\"Test\":{\"Int16\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
+#measurementmapping.combinemeasurements=true # Overrides device setting; Combines all measurements of a device to reduce the number of created measurements in the cloud
 #on_change=true # Send data only on value change
 
 [[device.registers]]

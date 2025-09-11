@@ -82,11 +82,13 @@ class ModbusMapper:
             formats[field_len], buffer.to_bytes(int(field_len / 8), sys.byteorder)
         )[0]
 
-    def map_register(self, read_register, register_def, separate_measurement=False):
+    def map_register(
+        self, read_register, register_def, device_combine_measurements=False
+    ):
         """Map register"""
         # pylint: disable=too-many-locals
         messages = []
-        measurement = None
+        separate_measurement = None
         start_bit = register_def["startbit"]
         field_len = register_def["nobits"]
         is_little_endian = register_def.get("littleendian") or False
@@ -142,10 +144,24 @@ class ModbusMapper:
                 data = register_def["measurementmapping"]["templatestring"].replace(
                     "%%", str(scaled_value)
                 )
-                measurement = MappedMessage(
-                    data,
-                    topics["measurement"].replace("CHILD_ID", self.device.get("name")),
-                )
+                if register_def["measurementmapping"].get(
+                    "combinemeasurements", device_combine_measurements
+                ):
+                    separate_measurement = MappedMessage(
+                        data,
+                        topics["measurement"].replace(
+                            "CHILD_ID", self.device.get("name")
+                        ),
+                    )
+                else:
+                    messages.append(
+                        MappedMessage(
+                            data,
+                            topics["measurement"].replace(
+                                "CHILD_ID", self.device.get("name")
+                            ),
+                        )
+                    )
 
             value = scaled_value
         if register_def.get("alarmmapping") is not None:
@@ -163,11 +179,7 @@ class ModbusMapper:
 
         self.data.setdefault(register_type, {})[register_key] = value
 
-        if separate_measurement:
-            return messages, measurement
-        if measurement is not None:
-            messages.append(measurement)
-        return messages
+        return messages, separate_measurement
 
     def map_coil(self, bits, coil_definition):
         """Map coil"""

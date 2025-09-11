@@ -92,7 +92,7 @@ This includes the basic configuration for the plugin such as poll rate and the c
 
 ### devices.toml
 
-This file includes the information for the connection(s) to the Modbus server(s) and how the Modbus Registers and Coils map to thin-edge’s Measurements, Events and Alarms. It's also possible to overwrite the measurement combination on a device level.
+This file includes the information for the connection(s) to the Modbus server(s) and how the Modbus Registers and Coils map to thin-edge’s Measurements, Events and Alarms. It's also possible to overwrite the measurement combination on a device level and on every single measurement mapping.
 
 The device config can be managed via Cumulocity IoT or created with the Cloud Fieldbus operations.
 
