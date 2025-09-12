@@ -166,3 +166,89 @@ class TestMapperOnChange(unittest.TestCase):
         )
         data4 = json.loads(messages4[0].data)
         self.assertAlmostEqual(data4["voltage"], 125.0)
+
+    def test_separate_measurements(self):
+        register_def = {
+            "number": 100,
+            "startbit": 0,
+            "nobits": 16,
+            "signed": False,
+            "on_change": False,
+            "measurementmapping": {"templatestring": '{"temp": %%}'},
+            "alarmmapping": {
+                "severity": "MAJOR",
+                "text": "This alarm should be created once",
+                "type": "TestAlarm",
+            },
+            "eventmapping": {
+                "text": "This event should be created once",
+                "type": "TestEvent",
+            },
+        }
+
+        # First poll: Check if all Messagetypes get send out
+        messages1 = self.mapper.map_register(
+            read_register=[1], register_def=register_def
+        )
+        topics1 = [message.topic for message in messages1]
+        self.assertTrue("te/device/test_device///m/" in topics1)
+        self.assertTrue("te/device/test_device///e/" in topics1)
+        self.assertTrue("te/device/test_device///a/" in topics1)
+
+        self.mapper.map_register(read_register=[0], register_def=register_def)
+        # Second poll: Check if Measurements get separated
+        messages2, measurement3 = self.mapper.map_register(
+            read_register=[1], register_def=register_def, separate_measurement=True
+        )
+        topics2 = [message.topic for message in messages2]
+        self.assertTrue("te/device/test_device///m/" not in topics2)
+        self.assertTrue("te/device/test_device///e/" in topics2)
+        self.assertTrue("te/device/test_device///a/" in topics2)
+
+        self.assertTrue("te/device/test_device///m/" in measurement3.topic)
+        self.assertTrue("te/device/test_device///e/" not in measurement3.topic)
+        self.assertTrue("te/device/test_device///a/" not in measurement3.topic)
+
+    def test_combine_messages(self):
+        register_def1 = {
+            "number": 100,
+            "startbit": 0,
+            "nobits": 16,
+            "signed": False,
+            "on_change": False,
+            "measurementmapping": {"templatestring": '{"sensor1":{"temp":%% }}'},
+        }
+        register_def2 = {
+            "number": 100,
+            "startbit": 0,
+            "nobits": 16,
+            "signed": False,
+            "on_change": False,
+            "measurementmapping": {"templatestring": '{"sensor1":{"RH":%% }}'},
+        }
+        register_def3 = {
+            "number": 100,
+            "startbit": 0,
+            "nobits": 16,
+            "signed": False,
+            "on_change": False,
+            "measurementmapping": {"templatestring": '{"sensor2":{"temp":%% }}'},
+        }
+
+        _, measurement1 = self.mapper.map_register(
+            read_register=[25], register_def=register_def1, separate_measurement=True
+        )
+        _, measurement2 = self.mapper.map_register(
+            read_register=[43], register_def=register_def2, separate_measurement=True
+        )
+        _, measurement3 = self.mapper.map_register(
+            read_register=[21], register_def=register_def3, separate_measurement=True
+        )
+
+        measurement1.extend_data(measurement2)
+        measurement1.extend_data(measurement3)
+
+        data = json.loads(measurement1.data)
+        self.assertAlmostEqual(data["sensor1"]["temp"], 25.0)
+        self.assertAlmostEqual(data["sensor1"]["RH"], 43.0)
+        self.assertAlmostEqual(data["sensor2"]["temp"], 21.0)

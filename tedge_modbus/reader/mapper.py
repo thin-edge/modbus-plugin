@@ -21,6 +21,28 @@ class MappedMessage:
     data: str = ""
     topic: str = ""
 
+    def extend_data(self, other_message):
+        """Combine Json data of two messages with the same topic"""
+        if self.topic != other_message.topic:
+            raise ValueError("Messages need to have the same topic")
+
+        def merge(d1: dict, d2: dict) -> dict:
+            """Recursively merge two dictionaries."""
+            for k, v in d2.items():
+                if k in d1 and isinstance(d1[k], dict) and isinstance(v, dict):
+                    d1[k] = merge(d1[k], v)
+                else:
+                    d1[k] = v
+            return d1
+
+        # Load both JSON strings into dictionaries
+        d1 = json.loads(self.data)
+        d2 = json.loads(other_message.data)
+        # Merge the dictionaries
+        merged = merge(d1, d2)
+        # Convert the merged dictionary back to a JSON string and update self.data
+        self.data = json.dumps(merged)
+
 
 class ModbusMapper:
     """Modbus mapper"""
@@ -60,10 +82,13 @@ class ModbusMapper:
             formats[field_len], buffer.to_bytes(int(field_len / 8), sys.byteorder)
         )[0]
 
-    def map_register(self, read_register, register_def):
+    def map_register(
+        self, read_register, register_def, device_combine_measurements=False
+    ):
         """Map register"""
         # pylint: disable=too-many-locals
         messages = []
+        separate_measurement = None
         start_bit = register_def["startbit"]
         field_len = register_def["nobits"]
         is_little_endian = register_def.get("littleendian") or False
@@ -119,15 +144,24 @@ class ModbusMapper:
                 data = register_def["measurementmapping"]["templatestring"].replace(
                     "%%", str(scaled_value)
                 )
-                messages.append(
-                    MappedMessage(
+                if register_def["measurementmapping"].get(
+                    "combinemeasurements", device_combine_measurements
+                ):
+                    separate_measurement = MappedMessage(
                         data,
                         topics["measurement"].replace(
                             "CHILD_ID", self.device.get("name")
                         ),
                     )
-                )
-                self.data.setdefault(register_type, {})[register_key] = scaled_value
+                else:
+                    messages.append(
+                        MappedMessage(
+                            data,
+                            topics["measurement"].replace(
+                                "CHILD_ID", self.device.get("name")
+                            ),
+                        )
+                    )
 
             value = scaled_value
         if register_def.get("alarmmapping") is not None:
@@ -143,9 +177,9 @@ class ModbusMapper:
                 )
             )
 
-        if register_def.get("measurementmapping") is None:
-            self.data.setdefault(register_type, {})[register_key] = value
-        return messages
+        self.data.setdefault(register_type, {})[register_key] = value
+
+        return messages, separate_measurement
 
     def map_coil(self, bits, coil_definition):
         """Map coil"""

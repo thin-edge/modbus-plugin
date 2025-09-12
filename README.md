@@ -89,10 +89,11 @@ This includes the basic configuration for the plugin such as poll rate and the c
 - serial configuration
 - connection to thin-edge.io (MQTT broker needs to match the one of tedge)
 - log level (e.g. INFO, WARN, ERROR)
+- measurement combination (opt-in feature to reduce the amount of created measurements in the cloud)
 
 ### devices.toml
 
-This file includes the information for the connection(s) to the Modbus server(s) and how the Modbus Registers and Coils map to thin-edge’s Measurements, Events and Alarms.
+This file includes the information for the connection(s) to the Modbus server(s) and how the Modbus Registers and Coils map to thin-edge’s Measurements, Events and Alarms. It's also possible to overwrite the measurement combination on a device level and on every single measurement mapping.
 
 The device config can be managed via Cumulocity IoT or created with the Cloud Fieldbus operations.
 
