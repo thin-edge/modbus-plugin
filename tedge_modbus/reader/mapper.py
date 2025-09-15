@@ -220,7 +220,11 @@ class ModbusMapper:
             topic = topics["alarm"]
             topic = topic.replace("CHILD_ID", self.device.get("name"))
             topic = topic.replace("TYPE", alarm_type)
-            data = {"text": text, "severity": severity, "time": datetime.now(timezone.utc).isoformat()}
+            data = {
+                "text": text,
+                "severity": severity,
+                "time": datetime.now(timezone.utc).isoformat(),
+            }
             messages.append(MappedMessage(json.dumps(data), topic))
         return messages
 

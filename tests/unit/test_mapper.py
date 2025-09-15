@@ -68,9 +68,7 @@ class TestMapperOnChange(unittest.TestCase):
         messages, _ = self.mapper.map_register(
             read_register=[123], register_def=register_def
         )
-        self.assertEqual(
-            len(messages), 0, "Should not publish when value is unchanged"
-        )
+        self.assertEqual(len(messages), 0, "Should not publish when value is unchanged")
 
     def test_on_change_false_and_value_is_same(self):
         register_def = {
@@ -198,7 +196,9 @@ class TestMapperOnChange(unittest.TestCase):
         self.mapper.map_register(read_register=[0], register_def=register_def)
         # Second poll: Check if Measurements get separated
         messages, measurement3 = self.mapper.map_register(
-            read_register=[1], register_def=register_def, device_combine_measurements=True
+            read_register=[1],
+            register_def=register_def,
+            device_combine_measurements=True,
         )
         topics = [message.topic for message in messages]
         self.assertTrue("te/device/test_device///m/" not in topics)
@@ -236,13 +236,19 @@ class TestMapperOnChange(unittest.TestCase):
         }
 
         _, measurement1 = self.mapper.map_register(
-            read_register=[25], register_def=register_def1, device_combine_measurements=True
+            read_register=[25],
+            register_def=register_def1,
+            device_combine_measurements=True,
         )
         _, measurement2 = self.mapper.map_register(
-            read_register=[43], register_def=register_def2, device_combine_measurements=True
+            read_register=[43],
+            register_def=register_def2,
+            device_combine_measurements=True,
         )
         _, measurement3 = self.mapper.map_register(
-            read_register=[21], register_def=register_def3, device_combine_measurements=True
+            read_register=[21],
+            register_def=register_def3,
+            device_combine_measurements=True,
         )
 
         measurement1.extend_data(measurement2)
@@ -295,7 +301,7 @@ class TestMapperOnChange(unittest.TestCase):
         alarm_data2 = json.loads(messages2[0].data)
         self.assertEqual(alarm_data2["severity"], "major")
         self.assertEqual(alarm_data2["text"], "This alarm tests the alarm mapping")
-    
+
     def test_event_mapping(self):
         register_def = {
             "number": 100,
