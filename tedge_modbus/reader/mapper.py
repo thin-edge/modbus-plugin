@@ -9,8 +9,8 @@ from dataclasses import dataclass
 
 topics = {
     "measurement": "te/device/CHILD_ID///m/",
-    "event": "te/device/CHILD_ID///e/",
-    "alarm": "te/device/CHILD_ID///a/",
+    "event": "te/device/CHILD_ID///e/TYPE",
+    "alarm": "te/device/CHILD_ID///a/TYPE",
 }
 
 
@@ -215,13 +215,12 @@ class ModbusMapper:
         # raise alarm if bit is 1
         if (old_data is None or old_data == 0) and value > 0:
             severity = alarm_mapping["severity"].lower()
-            alarm_type = alarm_mapping["type"]
+            alarm_type = alarm_mapping.get("type", "")
             text = alarm_mapping["text"]
             topic = topics["alarm"]
             topic = topic.replace("CHILD_ID", self.device.get("name"))
-            topic = topic.replace("SEVERITY", severity)
             topic = topic.replace("TYPE", alarm_type)
-            data = {"text": text, "time": datetime.now(timezone.utc).isoformat()}
+            data = {"text": text, "severity": severity, "time": datetime.now(timezone.utc).isoformat()}
             messages.append(MappedMessage(json.dumps(data), topic))
         return messages
 
@@ -231,7 +230,7 @@ class ModbusMapper:
         old_data = self.data.get(register_type).get(register_key)
         # raise event if value changed
         if old_data is None or old_data != value:
-            eventtype = event_mapping["type"]
+            eventtype = event_mapping.get("type", "")
             text = event_mapping["text"]
             topic = topics["event"]
             topic = topic.replace("CHILD_ID", self.device.get("name"))
