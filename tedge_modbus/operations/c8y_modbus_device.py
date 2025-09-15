@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cumulocity IoT Modbus device operation handler"""
+"""Cumulocity Modbus device operation handler"""
 import logging
 from dataclasses import dataclass
 import requests
@@ -77,12 +77,12 @@ def get_device_from_mapping(target: ModebusDevice, mapping):
 def parse_arguments(arguments) -> ModebusDevice:
     """Parse operation arguments"""
     return ModebusDevice(
-        modbus_type=arguments[2],  # Only works for TCP.
-        modbus_address=arguments[3],
-        child_name=arguments[4],
-        modbus_server=arguments[5],
-        device_id=arguments[6],
-        mapping_path=arguments[7],
+        modbus_type=arguments[0],
+        modbus_address=arguments[1],
+        child_name=arguments[2],
+        modbus_server=arguments[3],
+        device_id=arguments[4],
+        mapping_path=arguments[5],
     )
 
 
@@ -92,12 +92,8 @@ def run(arguments, context: Context):
     logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
     logger.info("New c8y_ModbusDevice operation")
     # Check and store arguments
-    if len(arguments) != 8:
-        raise ValueError(
-            "Expected 8 arguments in smart rest template. Got "
-            + str(len(arguments))
-            + "."
-        )
+    if len(arguments) != 6:
+        raise ValueError("Expected 6 arguments. Got " + str(len(arguments)) + ".")
     config_path = context.config_dir / "devices.toml"
     target = parse_arguments(arguments)
 

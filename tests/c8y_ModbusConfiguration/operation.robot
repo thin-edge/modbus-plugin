@@ -6,7 +6,7 @@ Suite Setup     Set Main Device
 
 *** Variables ***
 
-${EXPECTED_TRANSMIT_RATE}    3
+${EXPECTED_TRANSMIT_RATE}    6
 ${EXPECTED_POLLING_RATE}     3
 
 

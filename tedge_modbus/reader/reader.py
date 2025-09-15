@@ -18,7 +18,6 @@ from watchdog.observers import Observer
 
 from .banner import BANNER
 from .mapper import MappedMessage, ModbusMapper
-from .smartresttemplates import SMARTREST_TEMPLATES
 
 DEFAULT_FILE_DIR = "/etc/tedge/plugins/modbus"
 BASE_CONFIG_NAME = "modbus.toml"
@@ -100,11 +99,10 @@ class ModbusPoll:
             if self.tedge_client is not None and self.tedge_client.is_connected():
                 self.tedge_client.disconnect()
             self.tedge_client = self.connect_to_tedge()
-            # If connected to tedge, register service, update config and send smart rest template
+            # If connected to tedge, register service, update config
             time.sleep(5)
             self.register_child_devices(self.devices)
             self.register_service()
-            self.send_smartrest_templates()
             self.update_base_config_on_device(self.base_config)
             self.update_modbus_info_on_child_devices(self.devices)
             for evt in self.poll_scheduler.queue:
@@ -408,13 +406,6 @@ class ModbusPoll:
             except Exception as e:
                 self.logger.error("Failed to connect to thin-edge.io: %s", e)
                 time.sleep(5)
-
-    def send_smartrest_templates(self):
-        """Publish the Cumulocity IoT SmartREST template which are related to fieldbus messages"""
-        self.logger.debug("Send smart rest templates to tedge broker")
-        topic = "c8y/s/ut/modbus"
-        template = "\n".join(str(template) for template in SMARTREST_TEMPLATES)
-        self.send_tedge_message(MappedMessage(template, topic))
 
     def update_base_config_on_device(self, base_config):
         """Update the base configuration"""

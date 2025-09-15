@@ -1,4 +1,4 @@
 [exec]
-  topic = "c8y/s/dc/modbus"
-  on_message = "2"
-  command = "python3 -m tedge_modbus.operations c8y_ModbusDevice"
+  topic = "c8y/devicecontrol/notifications"
+  on_fragment = "c8y_ModbusDevice"
+  command = "python3 -m tedge_modbus.operations c8y_ModbusDevice ${.payload.c8y_ModbusDevice.protocol} ${.payload.c8y_ModbusDevice.address} ${.payload.c8y_ModbusDevice.name} ${.payload.c8y_ModbusDevice.ipAddress} ${.payload.c8y_ModbusDevice.id} ${.payload.c8y_ModbusDevice.type}"
