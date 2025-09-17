@@ -1,6 +1,7 @@
 [modbus]
 pollinterval=2
 loglevel="INFO"
+#combinemeasurements=true # if not set equals false; combines all measurements of a device to reduce the number of created measurements in the cloud
 
 [serial]
 port="/dev/ttyRS485"

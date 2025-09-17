@@ -24,16 +24,16 @@ class TestReaderPollingInterval(unittest.TestCase):
 
     def test_uses_device_specific_poll_interval(self):
         """
-        GIVEN a device has a specific poll_interval
+        GIVEN a device has a specific pollinterval
         WHEN the poller schedules the next poll for that device
         THEN it should use the device's interval.
         """
         # GIVEN a global poll interval
         self.poll.base_config = {"modbus": {"pollinterval": 5}}
-        # AND a device with its own poll_interval
+        # AND a device with its own pollinterval
         device_config = {
             "name": "fast_poller",
-            "poll_interval": 1,  # This should be used
+            "pollinterval": 1,  # This should be used
         }
 
         mock_poll_model = MagicMock()
@@ -80,3 +80,13 @@ class TestReaderPollingInterval(unittest.TestCase):
         self.poll.poll_scheduler.enter.assert_called_once()
         call_args, _ = self.poll.poll_scheduler.enter.call_args
         self.assertEqual(call_args[0], 5)
+
+    # Todo: Implement the following tests
+    def test_defaults_to_no_measurement_combination(self):
+        pass
+
+    def test_global_measurement_combination(self):
+        pass
+
+    def test_device_specific_measurement_combination(self):
+        pass
