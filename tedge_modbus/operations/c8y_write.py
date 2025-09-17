@@ -113,26 +113,5 @@ def run(arguments, context: Context):
     finally:
         try:
             client.close()
-        except Exception:  # pylint: disable=broad-except
+        except Exception: 
             pass
-
-    # # Optionally, publish an acknowledgement to Cumulocity via thin-edge (best-effort)
-    # try:
-    #     payload = {
-    #         "device": device_name,
-    #         "type": target_type,
-    #         "number": number,
-    #         "value": value_raw,
-    #         "status": "success",
-    #     }
-    #     mqtt_publish(
-    #         topic="te/device/main///e/c8y_ModbusWrite",
-    #         payload=json.dumps(payload),
-    #         qos=0,
-    #         retain=False,
-    #         hostname=context.broker,
-    #         port=context.port,
-    #         client_id="c8y_ModbusWrite-operation-client",
-    #     )
-    # except Exception:  # best-effort acknowledgement
-    #     pass
