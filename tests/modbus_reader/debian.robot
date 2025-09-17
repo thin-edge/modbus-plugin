@@ -23,6 +23,7 @@ ReInstall Modbus Plugin
     Operation Should Be SUCCESSFUL    ${uninstall_operation}    timeout=60
     Device Should Not Have Installed Software    tedge-modbus-plugin
 
+    # Ensure smartrest config has no longer 'modbus' after uninstall
     ${templates}=    Get tedge smartrest config
     Should Be Equal    ${templates}    []    msg=SmartREST Message should be removed
 
@@ -43,9 +44,6 @@ ReInstall Modbus Plugin
     ${shell_operation}=    Cumulocity.Operation Should Be SUCCESSFUL    ${shell_operation}    timeout=60
     # Check if plugin is running
     System D Service should be Active    tedge-modbus-plugin
-
-    ${templates}=    Get tedge smartrest config
-    Should Be Equal    ${templates}    ["modbus"]    msg=SmartREST Message should be removed
 
 
 *** Keywords ***

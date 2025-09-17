@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Cumulocity IoT SerialConfiguration operation handler"""
+"""Cumulocity SerialConfiguration operation handler"""
 import json
 import logging
 import toml
@@ -13,22 +13,22 @@ logging.basicConfig(
 )
 
 
+# pylint: disable=duplicate-code
 def run(arguments, context: Context):
     """Run c8y_SerialConfiguration operation handler"""
-    if len(arguments) != 6:
-        raise ValueError(
-            f"Expected 6 arguments in smart rest template. Got {len(arguments)}"
-        )
+    if len(arguments) != 1:
+        raise ValueError(f"Expected 1 argument. Got {len(arguments)}")
     # Get device configuration
     modbus_config = context.base_config
     loglevel = modbus_config["modbus"]["loglevel"] or "INFO"
     logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
     logger.info("New c8y_SerialConfiguration operation")
     logger.debug("Current configuration: %s", modbus_config)
-    baud_rate = int(arguments[2])
-    stop_bits = int(arguments[3])
-    parity = arguments[4]
-    data_bits = int(arguments[5])
+    data = json.loads(arguments[0])
+    baud_rate = data["baudRate"]
+    stop_bits = data["stopBits"]
+    parity = data["parity"]
+    data_bits = data["dataBits"]
     logger.debug(
         "baudRate: %d, stopBits: %d, parity: %s, dataBits: %d",
         baud_rate,

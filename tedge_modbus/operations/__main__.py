@@ -24,7 +24,7 @@ def main():
     elif command == "c8y_SerialConfiguration":
         run = c8y_serial_configuration.run
 
-    arguments = sys.argv[2].split(",") if len(sys.argv) > 2 else []
+    arguments = sys.argv[2:]
     context = Context()
     run(arguments, context)
 
