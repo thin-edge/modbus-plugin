@@ -15,16 +15,17 @@ logging.basicConfig(
 
 def run(arguments, context: Context):
     """Run c8y_ModbusConfiguration operation handler"""
-    if len(arguments) != 2:
-        raise ValueError(f"Expected 2 arguments. Got {len(arguments)}")
+    if len(arguments) != 1:
+        raise ValueError(f"Expected 1 argument. Got {len(arguments)}")
     # Get device configuration
     modbus_config = context.base_config
     loglevel = modbus_config["modbus"]["loglevel"] or "INFO"
     logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
     logger.info("New c8y_ModbusConfiguration operation")
     logger.debug("Current configuration: %s", modbus_config)
-    transmit_rate = int(arguments[0])
-    polling_rate = int(arguments[1])
+    data = json.loads(arguments[0])
+    transmit_rate = data["transmitRate"]
+    polling_rate = data["pollingRate"]
     logger.debug("transmitRate: %d, pollingRate: %d", transmit_rate, polling_rate)
 
     # Update configuration

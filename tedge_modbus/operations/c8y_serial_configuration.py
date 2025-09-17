@@ -13,20 +13,22 @@ logging.basicConfig(
 )
 
 
+# pylint: disable=duplicate-code
 def run(arguments, context: Context):
     """Run c8y_SerialConfiguration operation handler"""
-    if len(arguments) != 4:
-        raise ValueError(f"Expected 4 arguments. Got {len(arguments)}")
+    if len(arguments) != 1:
+        raise ValueError(f"Expected 1 argument. Got {len(arguments)}")
     # Get device configuration
     modbus_config = context.base_config
     loglevel = modbus_config["modbus"]["loglevel"] or "INFO"
     logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
     logger.info("New c8y_SerialConfiguration operation")
     logger.debug("Current configuration: %s", modbus_config)
-    baud_rate = int(arguments[0])
-    stop_bits = int(arguments[1])
-    parity = arguments[2]
-    data_bits = int(arguments[3])
+    data = json.loads(arguments[0])
+    baud_rate = data["baudRate"]
+    stop_bits = data["stopBits"]
+    parity = data["parity"]
+    data_bits = data["dataBits"]
     logger.debug(
         "baudRate: %d, stopBits: %d, parity: %s, dataBits: %d",
         baud_rate,

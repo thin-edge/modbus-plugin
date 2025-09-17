@@ -2,6 +2,7 @@
 """Cumulocity Modbus device operation handler"""
 import logging
 from dataclasses import dataclass
+import json
 import requests
 import toml
 
@@ -76,13 +77,14 @@ def get_device_from_mapping(target: ModebusDevice, mapping):
 
 def parse_arguments(arguments) -> ModebusDevice:
     """Parse operation arguments"""
+    data = json.loads(arguments[0])
     return ModebusDevice(
-        modbus_type=arguments[0],
-        modbus_address=arguments[1],
-        child_name=arguments[2],
-        modbus_server=arguments[3],
-        device_id=arguments[4],
-        mapping_path=arguments[5],
+        modbus_type=data["protocol"],
+        modbus_address=data["address"],
+        child_name=data["name"],
+        modbus_server=data["ipAddress"],
+        device_id=data["id"],
+        mapping_path=data["type"],
     )
 
 
@@ -92,8 +94,8 @@ def run(arguments, context: Context):
     logger.setLevel(getattr(logging, loglevel.upper(), logging.INFO))
     logger.info("New c8y_ModbusDevice operation")
     # Check and store arguments
-    if len(arguments) != 6:
-        raise ValueError("Expected 6 arguments. Got " + str(len(arguments)) + ".")
+    if len(arguments) != 1:
+        raise ValueError("Expected 1 argument. Got " + str(len(arguments)) + ".")
     config_path = context.config_dir / "devices.toml"
     target = parse_arguments(arguments)
 
