@@ -4,6 +4,5 @@ watchdog~=2.1.9
 pyModbusTCP
 pyserial-asyncio
 tomli~=2.0.1
-pip~=23.3
 requests~=2.32.0
 toml
