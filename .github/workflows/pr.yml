@@ -6,6 +6,9 @@ on:
       - main
   merge_group:
 
+permissions:
+  contents: read
+
 jobs:
   format:
     name: Format

@@ -10,6 +10,10 @@ on:
   pull_request_target:
     branches: [ main ]
   merge_group:
+
+permissions:
+  contents: read
+
 jobs:
   approve:
     # Note: Use approval as a job so that the downstream jobs are only prompted once (if more than 1 matrix job is defined)
@@ -28,6 +32,11 @@ jobs:
     environment:
       name: Test Auto
     runs-on: ubuntu-22.04
+    permissions:
+      # Required to publish system test results to the PR
+      issues: write
+      pull-requests: write
+      contents: read
     env:
       COMPOSE_PROJECT_NAME: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
       DEVICE_ID: ci_${{github.run_id}}_${{github.run_attempt || '1'}}
