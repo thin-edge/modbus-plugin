@@ -34,13 +34,9 @@
         }
       },
       "invalid": [1],
-      "write": [3],
+      "write": [3, 48],
       "bits": [
-        {
-          "addr": 2,
-          "value": -2,
-          "action": "increment"
-        }
+        48
       ],
       "uint16": [
         {
