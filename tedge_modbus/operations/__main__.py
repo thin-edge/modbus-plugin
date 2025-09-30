@@ -1,3 +1,4 @@
+# pylint: disable=R0801, duplicate-code
 """thin-edge.io Modbus operations handlers"""
 
 import sys
