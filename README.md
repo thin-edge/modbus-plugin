@@ -19,6 +19,7 @@ Plugin for polling Modbus devices and publishing the data to thin-edge.io. If us
   - [Log file access](#log-file-access)
   - [Config management](#config-management)
   - [Cloud Fieldbus](#cloud-fieldbus)
+  - [Writing operations](#writing-operations)
 
 - [Testing](#testing)
 - [Build](#build)
@@ -168,6 +169,74 @@ After creating the protocol, you can add a new Cloud Fieldbus Device. Select the
 ![Image](./doc/tcp_device.png)
 
 For adding a modbus RTU device you need to use unit-ID of the slave device in the configuration.
+
+### Write operations
+
+The plugin supports writing to Modbus registers and coils through Cumulocity IoT operations.
+
+#### Write to Register (c8y_SetRegister)
+
+Write values to Modbus registers requires the following json to be included in the operation:
+
+```json
+{
+  "c8y_SetRegister": {
+    "input": false,
+    "address": 1,
+    "register": 3,
+    "startBit": 0,
+    "noBits": 16,
+    "value": 23,
+    "ipAddress": "192.168.1.100"
+  }
+}
+```
+
+To create an operation to write a value to a Modbus register using Cumulocity, you can use the [go-c8y-cli](https://goc8ycli.netlify.app/docs/cli/c8y/operations/c8y_operations_create/) tool:
+
+```
+c8y operations create --device 12345 --template '{"c8y_SetRegister": { "input": false, "address": 1, "startBit": 0, "noBits": 16, "ipAddress": "192.168.1.2", "value": 23, "register": 3 }}' --description 'Writing a register'
+```
+
+Or use [REST API](https://cumulocity.com/api/core/#operation/postOperationCollectionResource).
+
+In the Cumulocity UI, the widget '[Asset table](https://cumulocity.com/docs/cockpit/widgets-collection/#asset-table)' can be used to create operations for the device. 
+
+![Image](./doc/write-register-asset-table.png)
+
+
+#### Write to Coil (c8y_SetCoil)
+
+Write values to Modbus coils requires the following json to be included in the operation:
+:
+
+```json
+{
+  "c8y_SetCoil": {
+    "input": false,
+    "address": 1,
+    "coil": 48,
+    "value": 1,
+    "ipAddress": "192.168.1.100"
+  }
+}
+```
+
+To create an operation to write a value to a Modbus coil using Cumulocity, you can use the [go-c8y-cli](https://goc8ycli.netlify.app/docs/cli/c8y/operations/c8y_operations_create/) tool:
+
+```
+c8y operations create --device 12345 --template '{"c8y_SetCoil": { "input": false, "coil": 48, "address": 1, "value": 1, "ipAddress": "192.168.1.100" } }' --description 'Writing a coil'
+```
+
+Or use the [Cumulocity REST API](https://cumulocity.com/api/core/#operation/postOperationCollectionResource).
+
+In the Cumulocity UI, the widget [Asset table](https://cumulocity.com/docs/cockpit/widgets-collection/#asset-table) can be used to create operations for the device. 
+
+![Image](./doc/write-coil-asset-table.png)
+
+
+:construction: The plugin does not yet support Cumulocity Fieldbus device widget. Please follow the above instrucstions to create operations. 
+
 
 ## Testing
 
