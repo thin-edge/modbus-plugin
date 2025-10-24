@@ -407,9 +407,9 @@ class ModbusPoll:
         self, msg: MappedMessage, retain: bool = False, qos: int = 0
     ):
         """Send a thin-edge.io message via MQTT"""
-        self.logger.debug("sending message %s to topic %s", msg.data, msg.topic)
+        self.logger.debug("sending message %s to topic %s", msg.serialize(), msg.topic)
         self.tedge_client.publish(
-            topic=msg.topic, payload=msg.data, retain=retain, qos=qos
+            topic=msg.topic, payload=msg.serialize(), retain=retain, qos=qos
         )
 
     def on_connect(
