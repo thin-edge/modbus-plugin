@@ -53,6 +53,20 @@ class ModbusMapper:
         self.device = device
         self.data = {"hr": {}, "ir": {}, "co": {}, "di": {}}
 
+    def _process_template(self, template_string, value):
+        """Process template string with value and timestamp replacements"""
+        # Replace the main value placeholder
+        data = template_string.replace("%%", str(value))
+
+        # Generate current timestamp in ISO format
+        current_timestamp = datetime.now(timezone.utc).isoformat()
+
+        # Replace timestamp placeholders
+        data = data.replace('"timestamp":""', f'"timestamp":"{current_timestamp}"')
+        data = data.replace('"time":""', f'"time":"{current_timestamp}"')
+
+        return data
+
     def validate(self, register_def):
         """Validate definition"""
         start_bit = register_def["startbit"]
@@ -141,8 +155,8 @@ class ModbusMapper:
                     has_changed = last_value != scaled_value
 
             if not on_change or last_value is None or has_changed:
-                data = register_def["measurementmapping"]["templatestring"].replace(
-                    "%%", str(scaled_value)
+                data = self._process_template(
+                    register_def["measurementmapping"]["templatestring"], scaled_value
                 )
                 if register_def["measurementmapping"].get(
                     "combinemeasurements", device_combine_measurements

@@ -35,6 +35,8 @@ decimalshiftright=0
 input=false
 datatype="float"
 measurementmapping.templatestring="{\"Test\":{\"Float32\":%% }}"
+#timestamp and time are also supported in the template 
+#measurementmapping.templatestring="{\"Test\":{\"Float32\":%% }, \"timestamp\":\"\"}"
 
 
 [[device.coils]]
