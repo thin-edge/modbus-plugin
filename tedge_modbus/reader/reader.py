@@ -491,7 +491,7 @@ class ModbusPoll:
                 self.logger.debug("Register data: %s", payload_data)
 
                 register_json = json.dumps(payload_data)
-                set_register.run(register_json)
+                set_register.run(register_json, topic=topic)
                 self.logger.debug("Successfully processed modbus_SetRegister command")
                 payload_data["status"] = "successful"
                 self.send_tedge_message(
@@ -519,7 +519,7 @@ class ModbusPoll:
                 self.logger.debug("Coil data: %s", payload_data)
 
                 coil_json = json.dumps(payload_data)
-                set_coil.run(coil_json)
+                set_coil.run(coil_json, topic=topic)
                 self.logger.debug("Successfully processed modbus_SetCoil command")
                 payload_data["status"] = "successful"
                 self.send_tedge_message(

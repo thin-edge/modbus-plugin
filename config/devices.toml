@@ -19,6 +19,7 @@ multiplier=1
 divisor=1
 decimalshiftright=0
 input=false # true = Input Register false = Holding Register
+name="Test_Int16"
 #see https://thin-edge.github.io/thin-edge.io/html/architecture/thin-edge-json.html
 measurementmapping.templatestring="{\"Test\":{\"Int16\":%% }}" # tedge JSON format string, %% will be replaced with the calculated value
 #measurementmapping.combinemeasurements=true # Overrides device setting; Combines all measurements of a device to reduce the number of created measurements in the cloud
@@ -34,6 +35,7 @@ divisor=1
 decimalshiftright=0
 input=false
 datatype="float"
+name="Test_Float32"
 measurementmapping.templatestring="{\"Test\":{\"Float32\":%% }}"
 
 
@@ -43,3 +45,4 @@ input=false
 alarmmapping.severity="MAJOR"
 alarmmapping.text="This alarm should be created once"
 alarmmapping.type="TestAlarm"
+name="TestAlarm"
