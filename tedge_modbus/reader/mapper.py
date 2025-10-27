@@ -20,6 +20,16 @@ class MappedMessage:
 
     data: str = ""
     topic: str = ""
+    time: str = datetime.now(timezone.utc).isoformat()
+
+    def serialize(self):
+        """Serialize message adding time if not present"""
+        if "/cmd/" in self.topic:
+            return self.data
+        out = json.loads(self.data)
+        if "time" not in out:
+            out["time"] = self.time
+        return json.dumps(out)
 
     def extend_data(self, other_message):
         """Combine Json data of two messages with the same topic"""
@@ -40,6 +50,10 @@ class MappedMessage:
         d2 = json.loads(other_message.data)
         # Merge the dictionaries
         merged = merge(d1, d2)
+
+        if "time" not in merged:
+            merged["time"] = self.time
+
         # Convert the merged dictionary back to a JSON string and update self.data
         self.data = json.dumps(merged)
 
