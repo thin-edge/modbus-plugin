@@ -13,7 +13,8 @@ import time
 import tomli
 from paho.mqtt import client as mqtt_client
 from pymodbus.client import ModbusTcpClient, ModbusSerialClient
-from pymodbus.exceptions import ConnectionException
+from pymodbus.exceptions import ConnectionException, ModbusIOException
+from pymodbus.constants import Defaults
 from watchdog.events import FileSystemEventHandler, DirModifiedEvent, FileModifiedEvent
 from watchdog.observers import Observer
 
@@ -301,11 +302,15 @@ class ModbusPoll:
                 stopbits=device["stopbits"],
                 parity=device["parity"],
                 bytesize=device["databits"],
+                timeout=device.get("timeout",Defaults.Timeout),
+                retries=device.get("retries",Defaults.Retries)
             )
         if device["protocol"] == "TCP":
             return ModbusTcpClient(
                 host=device["ip"],
                 port=device["port"],
+                timeout=device.get("timeout",Defaults.Timeout),
+                retries=device.get("retries",Defaults.Retries),
                 # TODO: Check if these parameters really supported by ModbusTcpClient?
                 auto_open=True,
                 auto_close=True,
@@ -333,6 +338,8 @@ class ModbusPoll:
                     slave=device["address"],
                 )
                 if result.isError():
+                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
+                        raise result
                     self.logger.error("Failed to read holding register: %s", result)
                     continue
                 hr_results.update(dict(zip(hr_range, result.registers)))
@@ -343,6 +350,8 @@ class ModbusPoll:
                     slave=device["address"],
                 )
                 if result.isError():
+                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
+                        raise result
                     self.logger.error("Failed to read input registers: %s", result)
                     continue
                 ir_result.update(dict(zip(ir_range, result.registers)))
@@ -353,6 +362,8 @@ class ModbusPoll:
                     slave=device["address"],
                 )
                 if result.isError():
+                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
+                        raise result
                     self.logger.error("Failed to read coils: %s", result)
                     continue
                 coil_results.update(dict(zip(coil_range, result.bits)))
@@ -363,12 +374,20 @@ class ModbusPoll:
                     slave=device["address"],
                 )
                 if result.isError():
+                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
+                        raise result
                     self.logger.error("Failed to read discrete input: %s", result)
                     continue
                 di_result.update(dict(zip(di_range, result.bits)))
         except ConnectionException as e:
             error = e
             self.logger.error("Failed to connect to device: %s: %s", device["name"], e)
+        except ModbusIOException as e:
+            error = e
+            if self.base_config["modbus"].get("skipontimeout", False):
+                self.logger.info("Skip polling %s: %s",device["name"],e)
+            else:
+                self.logger.error("Failed to read: %s", e)
         except Exception as e:
             error = e
             self.logger.error("Failed to read: %s", e)
