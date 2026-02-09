@@ -3,6 +3,9 @@ import sys
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 sys.path.insert(0, parent_dir)
+from pymodbus.exceptions import ModbusIOException
+from pymodbus.bit_read_message import ReadCoilsResponse
+from pymodbus.register_read_message import ReadInputRegistersResponse
 import unittest
 from unittest.mock import patch, MagicMock
 from tedge_modbus.reader.reader import ModbusPoll
@@ -81,6 +84,128 @@ class TestReaderPollingInterval(unittest.TestCase):
         self.poll.poll_scheduler.enter.assert_called_once()
         call_args, _ = self.poll.poll_scheduler.enter.call_args
         self.assertEqual(call_args[0], 5)
+
+    def test_skip_on_timeout(self):
+        """
+        GIVEN skipontimeout is True
+        WHEN get_data_from_device is called
+        AND the device times out on the first request
+        THEN polling is skipped immediately
+        """
+        # GIVEN
+        self.poll.base_config = {
+            "modbus": {
+                "pollinterval": 5,
+                "skipontimeout": True,
+            }
+        }
+
+        device_config = {
+            "name": "normal_poller",
+            "address": 1,
+        }
+
+        poll_model = (
+            [[1, 2]],  # holding registers
+            [[1, 2]],
+            [[1, 2]],
+            [[1, 2]],
+        )
+
+        mock_client = MagicMock()
+
+        # Simulate Modbus timeout
+        mock_client.read_holding_registers.return_value = ModbusIOException(
+            "Modbus Error: [Input/Output] No Response received from the remote unit/Unable to decode response"
+        )
+
+        with patch.object(
+            self.poll,
+            "get_modbus_client",
+            return_value=mock_client,
+        ):
+            # WHEN
+            coils, di, hr, ir, error = self.poll.get_data_from_device(
+                device_config, poll_model
+            )
+
+        # THEN
+        assert isinstance(error, ModbusIOException)
+        assert coils == {}
+        assert di == {}
+        assert hr == {}
+        assert ir == {}
+
+        # Ensure we exited early
+        mock_client.read_holding_registers.assert_called_once()
+        mock_client.read_input_registers.assert_not_called()
+        mock_client.read_coils.assert_not_called()
+        mock_client.read_discrete_inputs.assert_not_called()
+
+        mock_client.close.assert_called_once()
+
+    def test_wo_skip_on_timeout(self):
+        """
+        GIVEN skipontimeout is False
+        WHEN get_data_from_device is called
+        AND the device times out on the first request
+        THEN polling continues without errors
+        """
+        # GIVEN
+        self.poll.base_config = {
+            "modbus": {
+                "pollinterval": 5,
+            }
+        }
+
+        device_config = {
+            "name": "normal_poller",
+            "address": 1,
+        }
+
+        poll_model = (
+            [[1, 2]],  # holding registers
+            [[1, 2]],
+            [[1, 2]],
+            [[1, 2]],
+        )
+
+        mock_client = MagicMock()
+
+        # Simulate Modbus timeout
+        mock_client.read_holding_registers.return_value = ModbusIOException(
+            "Modbus Error: [Input/Output] No Response received from the remote unit/Unable to decode response"
+        )
+        mock_client.read_input_registers.return_value = ReadInputRegistersResponse([100,523])  # Simulate a valid response for input registers
+        mock_client.read_coils.return_value = ReadCoilsResponse([True,False])  # Simulate a valid response for coils
+        mock_client.read_discrete_inputs.return_value = ModbusIOException(
+            "Modbus Error: [Input/Output] No Response received from the remote unit/Unable to decode response"
+        )
+
+        with patch.object(
+            self.poll,
+            "get_modbus_client",
+            return_value=mock_client,
+        ):
+            # WHEN
+            coils, di, hr, ir, error = self.poll.get_data_from_device(
+                device_config, poll_model
+            )
+
+        # THEN
+        assert error is None
+        assert coils == {1: True, 2: False}
+        assert di == {}
+        assert hr == {}
+        assert ir == {1: 100, 2: 523}
+
+        # Ensure we exited early
+        mock_client.read_holding_registers.assert_called_once()
+        mock_client.read_input_registers.assert_called_once()
+        mock_client.read_coils.assert_called_once()
+        mock_client.read_discrete_inputs.assert_called_once()
+
+        mock_client.close.assert_called_once()
 
     def test_defaults_to_no_measurement_combination(self):
         """
