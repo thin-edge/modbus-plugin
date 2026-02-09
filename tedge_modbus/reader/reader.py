@@ -302,15 +302,15 @@ class ModbusPoll:
                 stopbits=device["stopbits"],
                 parity=device["parity"],
                 bytesize=device["databits"],
-                timeout=device.get("timeout",Defaults.Timeout),
-                retries=device.get("retries",Defaults.Retries)
+                timeout=device.get("timeout", Defaults.Timeout),
+                retries=device.get("retries", Defaults.Retries),
             )
         if device["protocol"] == "TCP":
             return ModbusTcpClient(
                 host=device["ip"],
                 port=device["port"],
-                timeout=device.get("timeout",Defaults.Timeout),
-                retries=device.get("retries",Defaults.Retries),
+                timeout=device.get("timeout", Defaults.Timeout),
+                retries=device.get("retries", Defaults.Retries),
                 # TODO: Check if these parameters really supported by ModbusTcpClient?
                 auto_open=True,
                 auto_close=True,
@@ -320,78 +320,108 @@ class ModbusPoll:
             "Expected protocol to be RTU or TCP. Got " + device["protocol"] + "."
         )
 
+    def _read_block(self, device, ranges, read_fn, register_type):
+        """
+        Read a group of Modbus ranges with unified error handling.
+
+        Returns:
+            dict: mapping of register/bit index to value
+        """
+        error_messages = {
+            "holding": "Failed to read holding registers: %s",
+            "input": "Failed to read input registers: %s",
+            "coils": "Failed to read coils: %s",
+            "discrete_input": "Failed to read discrete inputs: %s",
+        }
+        value_attributes = {
+            "holding": "registers",
+            "input": "registers",
+            "coils": "bits",
+            "discrete_input": "bits",
+        }
+        results = {}
+
+        for value_range in ranges:
+            result = read_fn(
+                address=value_range[0],
+                count=value_range[-1] - value_range[0] + 1,
+                slave=device["address"],
+            )
+
+            if result.isError():
+                if isinstance(result, ModbusIOException) and self.base_config[
+                    "modbus"
+                ].get("skipontimeout", False):
+                    print("Test")
+                    raise result
+
+                self.logger.error(error_messages[register_type], result)
+                continue
+
+            results.update(
+                dict(zip(value_range, getattr(result, value_attributes[register_type])))
+            )
+
+        return results
+
     def get_data_from_device(self, device, poll_model):
         """Get Modbus information from the device"""
-        # pylint: disable=too-many-locals
         client = self.get_modbus_client(device)
         holding_register, input_registers, coils, discrete_input = poll_model
-        hr_results = {}
-        ir_result = {}
+
+        error = None
         coil_results = {}
         di_result = {}
-        error = None
+        hr_results = {}
+        ir_result = {}
+
         try:
-            for hr_range in holding_register:
-                result = client.read_holding_registers(
-                    address=hr_range[0],
-                    count=hr_range[-1] - hr_range[0] + 1,
-                    slave=device["address"],
-                )
-                if result.isError():
-                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
-                        raise result
-                    self.logger.error("Failed to read holding register: %s", result)
-                    continue
-                hr_results.update(dict(zip(hr_range, result.registers)))
-            for ir_range in input_registers:
-                result = client.read_input_registers(
-                    address=ir_range[0],
-                    count=ir_range[-1] - ir_range[0] + 1,
-                    slave=device["address"],
-                )
-                if result.isError():
-                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
-                        raise result
-                    self.logger.error("Failed to read input registers: %s", result)
-                    continue
-                ir_result.update(dict(zip(ir_range, result.registers)))
-            for coil_range in coils:
-                result = client.read_coils(
-                    address=coil_range[0],
-                    count=coil_range[-1] - coil_range[0] + 1,
-                    slave=device["address"],
-                )
-                if result.isError():
-                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
-                        raise result
-                    self.logger.error("Failed to read coils: %s", result)
-                    continue
-                coil_results.update(dict(zip(coil_range, result.bits)))
-            for di_range in discrete_input:
-                result = client.read_discrete_inputs(
-                    address=di_range[0],
-                    count=di_range[-1] - di_range[0] + 1,
-                    slave=device["address"],
-                )
-                if result.isError():
-                    if (type(result) == ModbusIOException) and self.base_config["modbus"].get("skipontimeout", False):
-                        raise result
-                    self.logger.error("Failed to read discrete input: %s", result)
-                    continue
-                di_result.update(dict(zip(di_range, result.bits)))
+            hr_results = self._read_block(
+                device,
+                holding_register,
+                client.read_holding_registers,
+                "holding",
+            )
+
+            ir_result = self._read_block(
+                device,
+                input_registers,
+                client.read_input_registers,
+                "input",
+            )
+
+            coil_results = self._read_block(
+                device,
+                coils,
+                client.read_coils,
+                "coils",
+            )
+
+            di_result = self._read_block(
+                device,
+                discrete_input,
+                client.read_discrete_inputs,
+                "discrete_input",
+            )
+
         except ConnectionException as e:
             error = e
             self.logger.error("Failed to connect to device: %s: %s", device["name"], e)
+
         except ModbusIOException as e:
             error = e
             if self.base_config["modbus"].get("skipontimeout", False):
-                self.logger.info("Skip polling %s: %s",device["name"],e)
+                self.logger.info("Skip polling %s: %s", device["name"], e)
             else:
                 self.logger.error("Failed to read: %s", e)
+
         except Exception as e:
             error = e
             self.logger.error("Failed to read: %s", e)
-        client.close()
+
+        finally:
+            client.close()
+
         return coil_results, di_result, hr_results, ir_result, error
 
     def read_base_definition(self, base_path):

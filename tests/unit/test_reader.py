@@ -176,8 +176,12 @@ class TestReaderPollingInterval(unittest.TestCase):
         mock_client.read_holding_registers.return_value = ModbusIOException(
             "Modbus Error: [Input/Output] No Response received from the remote unit/Unable to decode response"
         )
-        mock_client.read_input_registers.return_value = ReadInputRegistersResponse([100,523])  # Simulate a valid response for input registers
-        mock_client.read_coils.return_value = ReadCoilsResponse([True,False])  # Simulate a valid response for coils
+        mock_client.read_input_registers.return_value = ReadInputRegistersResponse(
+            [100, 523]
+        )  # Simulate a valid response for input registers
+        mock_client.read_coils.return_value = ReadCoilsResponse(
+            [True, False]
+        )  # Simulate a valid response for coils
         mock_client.read_discrete_inputs.return_value = ModbusIOException(
             "Modbus Error: [Input/Output] No Response received from the remote unit/Unable to decode response"
         )
