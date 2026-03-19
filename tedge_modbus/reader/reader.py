@@ -622,11 +622,11 @@ class ModbusPoll:
     def register_child_devices(self, devices):
         """Register the child devices with thin-edge.io"""
         for device in devices:
+            topic = f"te/device/{device['name']}//"
             if device["name"] != "main":
                 self.logger.debug(
                     "Child device registration for device %s", device["name"]
                 )
-                topic = f"te/device/{device['name']}//"
                 payload = {
                     "@type": "child-device",
                     "name": device["name"],
@@ -635,6 +635,8 @@ class ModbusPoll:
                 self.send_tedge_message(
                     MappedMessage(json.dumps(payload), topic), retain=True, qos=1
                 )
+
+            self.logger.debug("Set command registration for device %s", device["name"])
             cmd_payload = "{}"
             for cmd in ["modbus_SetRegister", "modbus_SetCoil"]:
                 cmd_topic = topic + f"/cmd/{cmd}"
