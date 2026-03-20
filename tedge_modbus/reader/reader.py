@@ -352,7 +352,8 @@ class ModbusPoll:
                 if isinstance(result, ModbusIOException) and self.base_config[
                     "modbus"
                 ].get("skipontimeout", False):
-                    print("Test")
+                    self.logger.debug(error_messages[register_type], result)
+                    self.logger.debug("Skip device polling.")
                     raise result
 
                 self.logger.error(error_messages[register_type], result)
