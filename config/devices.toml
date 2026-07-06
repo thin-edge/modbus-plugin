@@ -8,6 +8,8 @@ protocol="TCP" # only support for TCP now
 littlewordendian=false
 #pollinterval=1  # Overrides global setting; device publishes at this interval
 #combinemeasurements=true # Overrides global setting; Combines all measurements of a device to reduce the number of created measurements in the cloud
+#retries=3 # how often each modbus command is tried at timeout, error, ...
+#timeout=3 # timeout for modbus responses
 
 
 [[device.registers]]
