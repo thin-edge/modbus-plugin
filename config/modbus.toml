@@ -2,6 +2,7 @@
 pollinterval=2
 loglevel="INFO"
 #combinemeasurements=true # if not set equals false; combines all measurements of a device to reduce the number of created measurements in the cloud
+#skipontimeout=true # if not set equals false; skip the poll-model of a slave if it has a timeout on one read command
 
 [serial]
 port="/dev/ttyRS485"
